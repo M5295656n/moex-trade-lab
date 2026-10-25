@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MOEX Trade Lab v3.3</title>
+<title>MOEX Trade Lab v3.4</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:12px;background:#10151d;color:#e8edf5;font-family:Arial,sans-serif}
@@ -32,12 +32,15 @@ th{color:#aeb9c9;font-weight:normal}
 .settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .field input{width:100%}
 canvas{display:block;width:100%;height:280px}
-@media(min-width:700px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.settings{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:700px){
+ .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .settings{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
 <main>
-<h1>MOEX Trade Lab v3.3</h1>
+<h1>MOEX Trade Lab v3.4</h1>
 <p>Лаборатория свинг-трейдинга. Только исследование и бумажная торговля.</p>
 
 <section class="panel">
@@ -82,22 +85,26 @@ canvas{display:block;width:100%;height:280px}
 <label class="field">Макс. удержание, свечей
 <input id="maxHold" type="number" value="60" min="1" step="1"></label>
 </div>
-<p class="note">Комиссия 0,05% и проскальзывание 0,05 ₽ — примерные настройки, а не подтверждённый тариф брокера. Перед выводами укажи реалистичные издержки.</p>
+<p class="note">Комиссия и проскальзывание — примерные настройки, а не подтверждённый тариф брокера. Перед выводами укажи реалистичные издержки.</p>
 <button id="testBtn">Сравнить 1,5R и 2R</button>
 </section>
 
 <section class="panel">
 <h2>Сравнение результатов</h2>
-<p class="note">Обе цели проверяются на одних и тех же найденных сигналах. R — первоначальный риск от входа до стопа. При ограничении одной открытой позицией число фактически открытых сделок может различаться: сделки с разными целями закрываются в разное время.</p>
+<p class="note">Верхняя таблица — отдельная симуляция каждого варианта с максимум одной открытой позицией. Нижняя — сравнение на всех одинаковых сигналах без ограничения одновременности. Нижняя таблица помогает изолировать влияние цели, но не является реализуемым портфельным результатом.</p>
 <div class="table-wrap">
 <table>
 <thead><tr><th>Метрика</th><th>Цель 1,5R</th><th>Цель 2R</th></tr></thead>
-<tbody id="results">
-<tr><td colspan="3">Сначала загрузи данные MOEX.</td></tr>
-</tbody>
+<tbody id="results"><tr><td colspan="3">Сначала загрузи данные MOEX.</td></tr></tbody>
 </table>
 </div>
 <p id="testNote" class="note">Тест ещё не запускался.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Общая выборка сигналов</th><th>1,5R</th><th>2R</th></tr></thead>
+<tbody id="pairedResults"><tr><td colspan="3">Тест ещё не запускался.</td></tr></tbody>
+</table>
+</div>
 </section>
 
 <section class="panel">
@@ -107,7 +114,7 @@ canvas{display:block;width:100%;height:280px}
 
 <section class="panel">
 <h2>Исторические события</h2>
-<p class="note">Пробой: закрытие выше максимума предыдущих 20 свечей. Ретест: минимум касается уровня или опускается ниже него, а закрытие остаётся не ниже уровня в течение следующих пяти свечей. Ретест датируется фактическим днём, а не днём пробоя.</p>
+<p class="note">Пробой: закрытие выше максимума предыдущих 20 свечей. Ретест: минимум касается уровня или опускается ниже, а закрытие остаётся не ниже уровня в следующие пять свечей. Дата события берётся из ответа MOEX без преобразования часового пояса.</p>
 <div class="table-wrap">
 <table>
 <thead><tr><th>Дата</th><th>Событие</th><th>Уровень</th><th>Закрытие</th></tr></thead>
@@ -118,7 +125,7 @@ canvas{display:block;width:100%;height:280px}
 
 <section class="panel">
 <h2>Журнал смоделированных сделок</h2>
-<p class="note">Это результаты исторической симуляции, а не реальные сделки. Показаны последние сделки для обоих вариантов.</p>
+<p class="note">Историческая симуляция, не реальные сделки. Показаны последние сделки обоих вариантов.</p>
 <div class="table-wrap">
 <table>
 <thead><tr><th>Цель</th><th>Вход</th><th>Выход</th><th>Цена входа</th><th>Шт.</th><th>Цена выхода</th><th>Результат</th><th>Причина</th></tr></thead>
@@ -129,7 +136,7 @@ canvas{display:block;width:100%;height:280px}
 
 <section class="panel">
 <h2>Ограничения теста</h2>
-<p class="note">Это упрощённый тест по дневным свечам. Он не учитывает дивиденды, налоги и корпоративные действия. Если стоп и цель достигнуты в одной свече, считается, что первым сработал стоп. Реальные исполнения могут отличаться из-за гэпов, спреда и ликвидности. Положительный результат на истории не доказывает будущую прибыльность.</p>
+<p class="note">Упрощённый тест по дневным свечам. Не учитывает дивиденды, налоги и корпоративные действия. Если стоп и цель достигнуты в одной свече, считается, что первым сработал стоп. Гэп через стоп может привести к убытку выше риск-бюджета. Просадка считается по закрытым сделкам, без учёта нереализованного результата. Положительный результат на истории не доказывает будущую прибыльность.</p>
 </section>
 </main>
 
@@ -161,6 +168,19 @@ function status(message, error=false) {
   $("status").className = "status " + (error ? "bad" : "");
 }
 
+function isWeekend(date) {
+  // Полдень UTC исключает сдвиг календарной даты из-за часового пояса.
+  const day = new Date(date + "T12:00:00Z").getUTCDay();
+  return day === 0 || day === 6;
+}
+
+function validDate(date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const d = new Date(date + "T00:00:00Z");
+  return Number.isFinite(d.getTime()) &&
+    d.toISOString().slice(0, 10) === date;
+}
+
 async function fetchPage(ticker, start) {
   const url =
     "https://iss.moex.com/iss/engines/stock/markets/shares/securities/" +
@@ -186,14 +206,18 @@ async function fetchPage(ticker, start) {
     if (ix[field] === undefined) throw Error("Нет поля " + field);
   }
 
-  return block.data.map(row => ({
-    date: String(row[ix.begin]).slice(0,10),
-    open: Number(row[ix.open]),
-    close: Number(row[ix.close]),
-    high: Number(row[ix.high]),
-    low: Number(row[ix.low])
-  })).filter(c =>
-    c.date &&
+  return block.data.map(row => {
+    const rawDate = String(row[ix.begin] ?? "");
+    return {
+      date: rawDate.slice(0, 10),
+      rawDate,
+      open: Number(row[ix.open]),
+      close: Number(row[ix.close]),
+      high: Number(row[ix.high]),
+      low: Number(row[ix.low])
+    };
+  }).filter(c =>
+    validDate(c.date) &&
     [c.open,c.close,c.high,c.low].every(Number.isFinite) &&
     c.low > 0 && c.high >= c.low
   );
@@ -218,22 +242,29 @@ async function loadData() {
   try {
     let all = [];
 
-    for (let page=0; page<20; page++) {
+    for (let page = 0; page < 20; page++) {
       status("Загружаем " + ticker + "… Получено строк: " + all.length);
-      const rows = await fetchPage(ticker, page*100);
+      const rows = await fetchPage(ticker, page * 100);
       all = all.concat(rows);
       if (rows.length < 100) break;
     }
 
     const unique = new Map();
-    all.forEach(c => unique.set(c.date,c));
+    all.forEach(c => {
+      // Дубликаты одной календарной даты не должны создавать лишние бары.
+      unique.set(c.date, c);
+    });
 
     all = Array.from(unique.values())
-      .sort((a,b) => a.date.localeCompare(b.date));
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     if (all.length < 25) {
       throw Error("Недостаточно свечей. Проверь тикер и данные MOEX.");
     }
+
+    // Не исправляем и не удаляем даты молча: показываем предупреждение,
+    // если API вернул свечи с календарными датами выходных.
+    const weekendRows = all.filter(c => isWeekend(c.date));
 
     candles = all.slice(-wanted);
     events = detectEvents(candles);
@@ -244,9 +275,17 @@ async function loadData() {
     drawChart(candles.slice(-100));
     runTest();
 
-    status("Загрузка завершена. Последняя свеча: " +
-      candles[candles.length-1].date +
-      ". Проверь свежесть данных перед анализом.");
+    const warning = weekendRows.length
+      ? " ВНИМАНИЕ: найдено строк с датами выходных: " +
+        weekendRows.slice(0, 5).map(c => c.rawDate).join(", ") +
+        ". Проверь исходный ответ API."
+      : "";
+
+    status(
+      "Загрузка завершена. Последняя свеча: " +
+      candles[candles.length - 1].date +
+      ". Свечей: " + candles.length + "." + warning
+    );
   } catch (e) {
     status("Ошибка загрузки: " + (e.message || String(e)), true);
   } finally {
@@ -256,7 +295,7 @@ async function loadData() {
 
 function breakoutLevel(data, i) {
   let level = -Infinity;
-  for (let j=i-20; j<i; j++) {
+  for (let j = i - 20; j < i; j++) {
     level = Math.max(level, data[j].high);
   }
   return level;
@@ -265,20 +304,26 @@ function breakoutLevel(data, i) {
 function detectEvents(data) {
   const out = [];
 
-  for (let i=20; i<data.length; i++) {
-    const level = breakoutLevel(data,i);
+  for (let i = 20; i < data.length; i++) {
+    const level = breakoutLevel(data, i);
     if (data[i].close <= level) continue;
 
     out.push({
-      index:i, date:data[i].date, type:"Пробой",
-      level, close:data[i].close
+      index: i,
+      date: data[i].date,
+      type: "Пробой",
+      level,
+      close: data[i].close
     });
 
-    for (let k=i+1; k<=Math.min(data.length-1,i+5); k++) {
+    for (let k = i + 1; k <= Math.min(data.length - 1, i + 5); k++) {
       if (data[k].low <= level && data[k].close >= level) {
         out.push({
-          index:k, date:data[k].date, type:"Ретест",
-          level, close:data[k].close
+          index: k,
+          date: data[k].date,
+          type: "Ретест",
+          level,
+          close: data[k].close
         });
         break;
       }
@@ -292,18 +337,19 @@ function makeSetups(data) {
   const out = [];
   const usedRetestBars = new Set();
 
-  for (let i=20; i<data.length; i++) {
-    const level = breakoutLevel(data,i);
+  for (let i = 20; i < data.length; i++) {
+    const level = breakoutLevel(data, i);
     if (data[i].close <= level) continue;
 
-    for (let k=i+1; k<=Math.min(data.length-1,i+5); k++) {
+    for (let k = i + 1; k <= Math.min(data.length - 1, i + 5); k++) {
       if (data[k].low <= level && data[k].close >= level) {
+        // Один ретестный бар создаёт не больше одного торгового сигнала.
         if (!usedRetestBars.has(k)) {
           out.push({
-            breakoutIndex:i,
-            retestIndex:k,
+            breakoutIndex: i,
+            retestIndex: k,
             level,
-            retestLow:data[k].low
+            retestLow: data[k].low
           });
           usedRetestBars.add(k);
         }
@@ -312,17 +358,19 @@ function makeSetups(data) {
     }
   }
 
-  return out.sort((a,b) => a.retestIndex-b.retestIndex);
+  return out.sort((a, b) => a.retestIndex - b.retestIndex);
 }
 
 function renderStats(ticker) {
-  const last = candles[candles.length-1];
+  const last = candles[candles.length - 1];
   $("tickerOut").textContent = ticker;
   $("countOut").textContent = candles.length;
   $("dateOut").textContent = last.date;
   $("closeOut").textContent = fmt(last.close) + " ₽";
-  $("breakOut").textContent = events.filter(e=>e.type==="Пробой").length;
-  $("retestOut").textContent = events.filter(e=>e.type==="Ретест").length;
+  $("breakOut").textContent =
+    events.filter(e => e.type === "Пробой").length;
+  $("retestOut").textContent =
+    events.filter(e => e.type === "Ретест").length;
 }
 
 function renderEvents() {
@@ -333,15 +381,15 @@ function renderEvents() {
     return;
   }
 
-  const sorted = events.slice().sort((a,b) =>
-    b.date.localeCompare(a.date) || b.index-a.index
-  ).slice(0,100);
+  const sorted = events.slice().sort((a, b) =>
+    b.date.localeCompare(a.date) || b.index - a.index
+  ).slice(0, 100);
 
   body.innerHTML = sorted.map(e =>
-    "<tr><td>"+esc(e.date)+"</td><td>"+
-    (e.type==="Пробой"?"B · Пробой":"R · Ретест")+
-    "</td><td>"+fmt(e.level)+"</td><td>"+
-    fmt(e.close)+"</td></tr>"
+    "<tr><td>" + esc(e.date) + "</td><td>" +
+    (e.type === "Пробой" ? "B · Пробой" : "R · Ретест") +
+    "</td><td>" + fmt(e.level) + "</td><td>" +
+    fmt(e.close) + "</td></tr>"
   ).join("");
 }
 
@@ -352,16 +400,16 @@ function settings() {
   };
 
   return {
-    capital:Math.max(0,num("capital",1000)),
-    risk:Math.max(0,num("riskBudget",20)),
-    fee:Math.max(0,num("fee",0.05))/100,
-    slip:Math.max(0,num("slippage",0.05)),
-    tick:Math.max(0.001,num("tick",0.01)),
-    maxHold:Math.max(1,Math.floor(num("maxHold",60)))
+    capital: Math.max(0, num("capital", 1000)),
+    risk: Math.max(0, num("riskBudget", 20)),
+    fee: Math.max(0, num("fee", 0.05)) / 100,
+    slip: Math.max(0, num("slippage", 0.05)),
+    tick: Math.max(0.001, num("tick", 0.01)),
+    maxHold: Math.max(1, Math.floor(num("maxHold", 60)))
   };
 }
 
-function simulate(targetR, s) {
+function simulate(targetR, s, onePosition = true) {
   let equity = s.capital;
   let peak = equity;
   let maxDD = 0;
@@ -372,16 +420,16 @@ function simulate(targetR, s) {
   for (const setup of setups) {
     const entryIndex = setup.retestIndex + 1;
 
-    // Нужна следующая свеча: вход моделируется на её открытии.
+    // Вход моделируется на открытии следующей торговой свечи.
     if (entryIndex >= candles.length) continue;
 
-    // Не открываем новую позицию, пока предыдущая не закрыта.
-    if (entryIndex < nextAvailable) {
+    if (onePosition && entryIndex < nextAvailable) {
       skipped++;
       continue;
     }
 
-    const entry = candles[entryIndex].open + s.slip;
+    const entryRaw = candles[entryIndex].open;
+    const entry = entryRaw + s.slip;
     const stop = setup.retestLow - s.tick;
 
     if (!(entry > stop && stop > 0)) {
@@ -390,140 +438,182 @@ function simulate(targetR, s) {
     }
 
     const riskPerShare = entry - stop;
-    const roundTripCostPerShare =
-      (entry + stop) * s.fee + 2*s.slip;
 
-    const qtyByRisk = Math.floor(
-      s.risk / (riskPerShare + roundTripCostPerShare)
-    );
+    // Приближённая оценка риска на акцию:
+    // движение до стопа + выходное проскальзывание + комиссия с обеих сторон.
+    const estimatedRiskPerShare =
+      riskPerShare + s.slip + (entry + stop) * s.fee;
+
+    const qtyByRisk = estimatedRiskPerShare > 0
+      ? Math.floor(s.risk / estimatedRiskPerShare)
+      : 0;
 
     const qtyByCash = Math.floor(
-      equity / (entry * (1+s.fee))
+      equity / (entry * (1 + s.fee))
     );
 
-    const qty = Math.min(qtyByRisk,qtyByCash);
+    const qty = Math.min(qtyByRisk, qtyByCash);
 
     if (qty < 1) {
       skipped++;
       continue;
     }
 
-    const target = entry + targetR*riskPerShare;
+    const target = entry + targetR * riskPerShare;
     const lastIndex = Math.min(
-      candles.length-1, entryIndex+s.maxHold-1
+      candles.length - 1,
+      entryIndex + s.maxHold - 1
     );
 
     let exitIndex = lastIndex;
     let exitRaw = candles[lastIndex].close;
     let reason = "Истекло время";
 
-    for (let k=entryIndex; k<=lastIndex; k++) {
+    for (let k = entryIndex; k <= lastIndex; k++) {
       const c = candles[k];
 
-      // При гэпе ниже стопа исполняемся по открытию, а не по стоп-цене.
+      // При гэпе стоп исполняется по открытию, если открытие хуже стопа.
       if (c.open <= stop) {
-        exitIndex=k;
-        exitRaw=c.open;
-        reason="Стоп / гэп";
+        exitIndex = k;
+        exitRaw = c.open;
+        reason = "Стоп / гэп";
         break;
       }
 
+      // Гэп выше цели: моделируем исполнение по открытию.
       if (c.open >= target) {
-        exitIndex=k;
-        exitRaw=c.open;
-        reason="Цель / гэп вверх";
+        exitIndex = k;
+        exitRaw = c.open;
+        reason = "Цель / гэп вверх";
         break;
       }
 
       const hitStop = c.low <= stop;
       const hitTarget = c.high >= target;
 
-      // Если оба уровня в одной свече — консервативно считаем стоп первым.
+      // Если оба уровня внутри дневной свечи — считаем стоп первым.
       if (hitStop) {
-        exitIndex=k;
-        exitRaw=stop;
-        reason=hitTarget ?
-          "Стоп: оба уровня в свече" : "Стоп";
+        exitIndex = k;
+        exitRaw = stop;
+        reason = hitTarget
+          ? "Стоп: оба уровня в свече"
+          : "Стоп";
         break;
       }
 
       if (hitTarget) {
-        exitIndex=k;
-        exitRaw=target;
-        reason="Цель";
+        exitIndex = k;
+        exitRaw = target;
+        reason = "Цель";
         break;
       }
     }
 
-    const exit = exitRaw - s.slip;
-    const entryCosts = qty*entry*s.fee;
-    const exitCosts = qty*Math.max(0,exit)*s.fee;
-    const pnl = qty*(exit-entry)-entryCosts-exitCosts;
+    // Проскальзывание на выходе применяется один раз.
+    const exit = Math.max(0, exitRaw - s.slip);
+    const entryCosts = qty * entry * s.fee;
+    const exitCosts = qty * exit * s.fee;
+    const pnl = qty * (exit - entry) - entryCosts - exitCosts;
 
     equity += pnl;
-    peak = Math.max(peak,equity);
-    maxDD = Math.max(maxDD,peak-equity);
+    peak = Math.max(peak, equity);
+    maxDD = Math.max(maxDD, peak - equity);
 
     trades.push({
-      entryDate:candles[entryIndex].date,
-      exitDate:candles[exitIndex].date,
-      entry,stop,target,exit,qty,pnl,reason
+      entryDate: candles[entryIndex].date,
+      exitDate: candles[exitIndex].date,
+      entry,
+      stop,
+      target,
+      exit,
+      qty,
+      pnl,
+      reason,
+      setupIndex: setup.retestIndex
     });
 
-    nextAvailable = exitIndex+1;
+    if (onePosition) {
+      nextAvailable = exitIndex + 1;
+    }
   }
 
-  const wins=trades.filter(t=>t.pnl>0);
-  const losses=trades.filter(t=>t.pnl<0);
-  const sum=trades.reduce((a,t)=>a+t.pnl,0);
+  const wins = trades.filter(t => t.pnl > 0);
+  const losses = trades.filter(t => t.pnl < 0);
+  const sum = trades.reduce((a, t) => a + t.pnl, 0);
 
   return {
-    trades,wins:wins.length,losses:losses.length,skipped,
-    net:sum,ending:s.capital+sum,maxDD,
-    winRate:trades.length ? wins.length/trades.length*100 : 0,
-    avg:trades.length ? sum/trades.length : 0,
-    avgWin:wins.length ? wins.reduce((a,t)=>a+t.pnl,0)/wins.length : 0,
-    avgLoss:losses.length ? losses.reduce((a,t)=>a+t.pnl,0)/losses.length : 0
+    trades,
+    wins: wins.length,
+    losses: losses.length,
+    skipped,
+    net: sum,
+    ending: s.capital + sum,
+    maxDD,
+    winRate: trades.length ? wins.length / trades.length * 100 : 0,
+    avg: trades.length ? sum / trades.length : 0,
+    avgWin: wins.length
+      ? wins.reduce((a, t) => a + t.pnl, 0) / wins.length
+      : 0,
+    avgLoss: losses.length
+      ? losses.reduce((a, t) => a + t.pnl, 0) / losses.length
+      : 0
   };
+}
+
+function resultRows(a, b) {
+  return [
+    ["Закрытых сделок", a.trades.length, b.trades.length],
+    ["Доля прибыльных", fmt(a.winRate) + "%", fmt(b.winRate) + "%"],
+    ["Суммарный результат после издержек", fmt(a.net) + " ₽", fmt(b.net) + " ₽"],
+    ["Средний результат на сделку", fmt(a.avg) + " ₽", fmt(b.avg) + " ₽"],
+    ["Средняя прибыль", fmt(a.avgWin) + " ₽", fmt(b.avgWin) + " ₽"],
+    ["Средний убыток", fmt(a.avgLoss) + " ₽", fmt(b.avgLoss) + " ₽"],
+    ["Максимальная просадка по закрытым сделкам", fmt(a.maxDD) + " ₽", fmt(b.maxDD) + " ₽"],
+    ["Итоговый виртуальный капитал", fmt(a.ending) + " ₽", fmt(b.ending) + " ₽"],
+    ["Пропущено / нельзя открыть", a.skipped, b.skipped]
+  ];
+}
+
+function renderRows(target, rows) {
+  $(target).innerHTML = rows.map(r =>
+    "<tr><td>" + r[0] + "</td><td>" + r[1] +
+    "</td><td>" + r[2] + "</td></tr>"
+  ).join("");
 }
 
 function runTest() {
   if (candles.length < 25) return;
 
   const s = settings();
-  const a = simulate(1.5,s);
-  const b = simulate(2,s);
 
-  const rows = [
-    ["Закрытых сделок",a.trades.length,b.trades.length],
-    ["Доля прибыльных",fmt(a.winRate)+"%",fmt(b.winRate)+"%"],
-    ["Суммарный результат после издержек",fmt(a.net)+" ₽",fmt(b.net)+" ₽"],
-    ["Средний результат на сделку",fmt(a.avg)+" ₽",fmt(b.avg)+" ₽"],
-    ["Средняя прибыль",fmt(a.avgWin)+" ₽",fmt(b.avgWin)+" ₽"],
-    ["Средний убыток",fmt(a.avgLoss)+" ₽",fmt(b.avgLoss)+" ₽"],
-    ["Максимальная просадка по закрытым сделкам",fmt(a.maxDD)+" ₽",fmt(b.maxDD)+" ₽"],
-    ["Итоговый виртуальный капитал",fmt(a.ending)+" ₽",fmt(b.ending)+" ₽"],
-    ["Пропущено / нельзя открыть",a.skipped,b.skipped]
-  ];
+  // Реалистичный портфельный режим: по одной позиции в каждом варианте.
+  const a = simulate(1.5, s, true);
+  const b = simulate(2, s, true);
 
-  $("results").innerHTML = rows.map(r =>
-    "<tr><td>"+r[0]+"</td><td>"+r[1]+"</td><td>"+r[2]+"</td></tr>"
-  ).join("");
+  // Сравнение целей на одной последовательности setup-сигналов.
+  // Сделки могут перекрываться, поэтому это диагностический тест цели.
+  const pairedA = simulate(1.5, s, false);
+  const pairedB = simulate(2, s, false);
+
+  renderRows("results", resultRows(a, b));
+  renderRows("pairedResults", resultRows(pairedA, pairedB));
 
   $("testNote").textContent =
-    "Найдено setup-событий: "+setups.length+
-    ". Использованы одинаковые правила сигналов, риск-бюджет "+
-    fmt(s.risk)+" ₽, максимум одна позиция. "+
-    "Результаты зависят от параметров издержек и допущений исполнения.";
+    "Найдено setup-сигналов: " + setups.length +
+    ". Верхняя таблица — отдельная симуляция с одной позицией одновременно. " +
+    "Нижняя — оценка каждого сигнала независимо, без ограничения одновременности. " +
+    "Риск-бюджет: " + fmt(s.risk) + " ₽. " +
+    "Размер позиции рассчитывается с оценкой комиссий и проскальзывания, " +
+    "но гэпы могут превысить риск-бюджет.";
 
-  renderTradeLog(a,b);
+  renderTradeLog(a, b);
 }
 
-function renderTradeLog(a,b) {
+function renderTradeLog(a, b) {
   const all = [
-    ...a.trades.map(t=>({...t,variant:"1,5R"})),
-    ...b.trades.map(t=>({...t,variant:"2R"}))
-  ].sort((x,y)=>y.entryDate.localeCompare(x.entryDate)).slice(0,80);
+    ...a.trades.map(t => ({...t, variant: "1,5R"})),
+    ...b.trades.map(t => ({...t, variant: "2R"}))
+  ].sort((x, y) => y.entryDate.localeCompare(x.entryDate)).slice(0, 80);
 
   if (!all.length) {
     $("tradeLog").innerHTML =
@@ -532,78 +622,93 @@ function renderTradeLog(a,b) {
   }
 
   $("tradeLog").innerHTML = all.map(t =>
-    "<tr><td>"+t.variant+"</td><td>"+t.entryDate+
-    "</td><td>"+t.exitDate+"</td><td>"+fmt(t.entry)+
-    "</td><td>"+t.qty+"</td><td>"+fmt(t.exit)+
-    '</td><td class="'+(t.pnl>=0?"good":"bad")+'">'+
-    fmt(t.pnl)+" ₽</td><td>"+esc(t.reason)+"</td></tr>"
+    "<tr><td>" + t.variant + "</td><td>" + t.entryDate +
+    "</td><td>" + t.exitDate + "</td><td>" + fmt(t.entry) +
+    "</td><td>" + t.qty + "</td><td>" + fmt(t.exit) +
+    '</td><td class="' + (t.pnl >= 0 ? "good" : "bad") + '">' +
+    fmt(t.pnl) + " ₽</td><td>" + esc(t.reason) + "</td></tr>"
   ).join("");
 }
 
 function drawChart(data) {
-  const canvas=$("chart");
-  const ctx=canvas.getContext("2d");
-  const rect=canvas.getBoundingClientRect();
-  const dpr=window.devicePixelRatio||1;
-  const w=Math.max(320,Math.floor(rect.width||700));
-  const h=Math.max(240,Math.floor(rect.height||280));
+  const canvas = $("chart");
+  const ctx = canvas.getContext("2d");
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(320, Math.floor(rect.width || 700));
+  const h = Math.max(240, Math.floor(rect.height || 280));
 
-  canvas.width=Math.floor(w*dpr);
-  canvas.height=Math.floor(h*dpr);
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
-  ctx.fillStyle="#10151d";
-  ctx.fillRect(0,0,w,h);
+  canvas.width = Math.floor(w * dpr);
+  canvas.height = Math.floor(h * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = "#10151d";
+  ctx.fillRect(0, 0, w, h);
 
   if (!data.length) {
-    ctx.fillStyle="#aeb9c9";
-    ctx.fillText("Загрузи данные MOEX.",12,25);
+    ctx.fillStyle = "#aeb9c9";
+    ctx.fillText("Загрузи данные MOEX.", 12, 25);
     return;
   }
 
-  const left=10,right=65,top=12,bottom=27;
-  const pw=w-left-right,ph=h-top-bottom;
-  let min=Math.min(...data.map(c=>c.low));
-  let max=Math.max(...data.map(c=>c.high));
-  const range=max-min||1;
-  min-=range*.06;max+=range*.06;
+  const left = 10, right = 65, top = 12, bottom = 27;
+  const pw = w - left - right;
+  const ph = h - top - bottom;
 
-  const y=p=>top+(max-p)/(max-min)*ph;
+  let min = Math.min(...data.map(c => c.low));
+  let max = Math.max(...data.map(c => c.high));
+  const range = max - min || 1;
+  min -= range * 0.06;
+  max += range * 0.06;
 
-  ctx.font="10px Arial";
-  ctx.strokeStyle="#283444";
-  ctx.fillStyle="#aeb9c9";
+  const y = p => top + (max - p) / (max - min) * ph;
 
-  for(let i=0;i<=4;i++){
-    const p=max-(max-min)*i/4,yy=y(p);
-    ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(w-right,yy);ctx.stroke();
-    ctx.fillText(fmt(p),w-right+4,yy+3);
+  ctx.font = "10px Arial";
+  ctx.strokeStyle = "#283444";
+  ctx.fillStyle = "#aeb9c9";
+
+  for (let i = 0; i <= 4; i++) {
+    const p = max - (max - min) * i / 4;
+    const yy = y(p);
+    ctx.beginPath();
+    ctx.moveTo(left, yy);
+    ctx.lineTo(w - right, yy);
+    ctx.stroke();
+    ctx.fillText(fmt(p), w - right + 4, yy + 3);
   }
 
-  const step=pw/data.length;
-  const bw=Math.max(2,Math.min(8,step*.6));
+  const step = pw / data.length;
+  const bw = Math.max(2, Math.min(8, step * 0.6));
 
-  data.forEach((c,i)=>{
-    const x=left+step*(i+.5);
-    const color=c.close>=c.open?"#35cf8a":"#ff6577";
-    ctx.strokeStyle=color;ctx.fillStyle=color;
-    ctx.beginPath();ctx.moveTo(x,y(c.high));ctx.lineTo(x,y(c.low));ctx.stroke();
-    const topBody=y(Math.max(c.open,c.close));
-    const bottomBody=y(Math.min(c.open,c.close));
-    ctx.fillRect(x-bw/2,topBody,bw,Math.max(1,bottomBody-topBody));
+  data.forEach((c, i) => {
+    const x = left + step * (i + 0.5);
+    const color = c.close >= c.open ? "#35cf8a" : "#ff6577";
+
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, y(c.high));
+    ctx.lineTo(x, y(c.low));
+    ctx.stroke();
+
+    const topBody = y(Math.max(c.open, c.close));
+    const bottomBody = y(Math.min(c.open, c.close));
+    ctx.fillRect(x - bw / 2, topBody, bw, Math.max(1, bottomBody - topBody));
   });
 
-  ctx.fillStyle="#aeb9c9";
-  ctx.textAlign="left";ctx.fillText(data[0].date,left,h-8);
-  ctx.textAlign="right";ctx.fillText(data[data.length-1].date,w-right,h-8);
+  ctx.fillStyle = "#aeb9c9";
+  ctx.textAlign = "left";
+  ctx.fillText(data[0].date, left, h - 8);
+  ctx.textAlign = "right";
+  ctx.fillText(data[data.length - 1].date, w - right, h - 8);
 }
 
-$("loadBtn").addEventListener("click",loadData);
-$("testBtn").addEventListener("click",runTest);
-$("period").addEventListener("change",()=>{
+$("loadBtn").addEventListener("click", loadData);
+$("testBtn").addEventListener("click", runTest);
+$("period").addEventListener("change", () => {
   status("Для загрузки выбранного количества свечей нажми «Загрузить MOEX».");
 });
-window.addEventListener("resize",()=>drawChart(candles.slice(-100)));
+window.addEventListener("resize", () => drawChart(candles.slice(-100)));
 
 drawChart([]);
 </script>
