@@ -4,147 +4,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MOEX Trade Lab v3.2</title>
+<title>MOEX Trade Lab v3.3</title>
 <style>
-* { box-sizing: border-box; }
-body {
-  margin: 0; padding: 16px;
-  background: #10151d; color: #e8edf5;
-  font-family: Arial, sans-serif;
-}
-main { max-width: 1000px; margin: auto; }
-h1 { font-size: 25px; margin: 0 0 8px; }
-h2 { font-size: 18px; margin: 22px 0 10px; }
-p { color: #aeb9c9; line-height: 1.5; }
-.panel {
-  background: #19212d; border: 1px solid #303c4c;
-  border-radius: 12px; padding: 14px; margin: 12px 0;
-}
-.controls {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  align-items: center;
-}
-input, select, button {
-  min-height: 42px; border-radius: 8px;
-  border: 1px solid #46556b; padding: 9px 12px;
-  font-size: 15px;
-}
-input, select { background: #10151d; color: white; }
-input { width: 110px; text-transform: uppercase; }
-button {
-  background: #3983e8; color: white;
-  border: 0; font-weight: bold; cursor: pointer;
-}
-button:disabled { opacity: .55; }
-.stats {
-  display: grid; grid-template-columns: repeat(2, minmax(0,1fr));
-  gap: 8px;
-}
-.stat {
-  background: #10151d; border-radius: 8px; padding: 11px;
-  min-width: 0;
-}
-.stat span { display: block; font-size: 12px; color: #aeb9c9; }
-.stat strong { display: block; margin-top: 5px; font-size: 17px; overflow-wrap: anywhere; }
-.status { white-space: pre-wrap; overflow-wrap: anywhere; }
-.good { color: #58d69b; }
-.bad { color: #ff9d9d; }
-.muted { color: #aeb9c9; }
-.chart-wrap { width: 100%; overflow: hidden; }
-canvas { display: block; width: 100%; height: 360px; }
-.note { font-size: 13px; }
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th, td {
-  padding: 10px 8px; border-bottom: 1px solid #303c4c;
-  text-align: left; white-space: nowrap;
-}
-th { color: #aeb9c9; font-weight: normal; }
-.tag { padding: 4px 6px; border-radius: 5px; background: #293648; }
-@media (max-width: 520px) {
-  body { padding: 10px; }
-  h1 { font-size: 22px; }
-  canvas { height: 300px; }
-  .stat strong { font-size: 15px; }
-}
+*{box-sizing:border-box}
+body{margin:0;padding:12px;background:#10151d;color:#e8edf5;font-family:Arial,sans-serif}
+main{max-width:1100px;margin:auto}
+h1{font-size:23px}h2{font-size:18px;margin:18px 0 10px}
+p{color:#aeb9c9;line-height:1.5}
+.panel{background:#19212d;border:1px solid #303c4c;border-radius:12px;padding:13px;margin:12px 0}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input,select,button{min-height:42px;border-radius:8px;border:1px solid #46556b;padding:9px;font-size:15px}
+input,select{background:#10151d;color:white}
+input{width:100px}
+button{background:#3983e8;color:white;border:0;font-weight:bold}
+button:disabled{opacity:.5}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.stat{background:#10151d;border-radius:8px;padding:10px;min-width:0}
+.stat span{display:block;font-size:12px;color:#aeb9c9}
+.stat strong{display:block;margin-top:5px;font-size:16px;overflow-wrap:anywhere}
+.note{font-size:13px}.status{white-space:pre-wrap;overflow-wrap:anywhere}
+.good{color:#58d69b}.bad{color:#ff9d9d}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:9px 7px;border-bottom:1px solid #303c4c;text-align:left;white-space:nowrap}
+th{color:#aeb9c9;font-weight:normal}
+.field{display:flex;flex-direction:column;gap:5px;color:#aeb9c9;font-size:13px}
+.settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field input{width:100%}
+canvas{display:block;width:100%;height:280px}
+@media(min-width:700px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.settings{grid-template-columns:repeat(4,minmax(0,1fr))}}
 </style>
 </head>
 <body>
 <main>
-  <h1>MOEX Trade Lab v3.2</h1>
-  <p>Лаборатория бумажной торговли. Данные Московской биржи, дневные свечи, пробои и ретесты.</p>
+<h1>MOEX Trade Lab v3.3</h1>
+<p>Лаборатория свинг-трейдинга. Только исследование и бумажная торговля.</p>
 
-  <section class="panel">
-    <div class="controls">
-      <label for="ticker">Тикер</label>
-      <input id="ticker" value="SBER" maxlength="12" autocomplete="off">
-      <label for="period">Свечей</label>
-      <select id="period">
-        <option value="120">120</option>
-        <option value="250">250</option>
-        <option value="500" selected>500</option>
-      </select>
-      <button id="loadBtn" onclick="loadData()">Загрузить MOEX</button>
-    </div>
-    <p id="status" class="status">Готово к загрузке.</p>
-  </section>
+<section class="panel">
+<div class="controls">
+<label for="ticker">Тикер</label>
+<input id="ticker" value="SBER" maxlength="12">
+<label for="period">Свечей</label>
+<select id="period">
+<option value="120">120</option>
+<option value="250">250</option>
+<option value="500" selected>500</option>
+</select>
+<button id="loadBtn">Загрузить MOEX</button>
+</div>
+<p id="status" class="status">Готово к загрузке.</p>
+</section>
 
-  <section class="panel">
-    <div class="stats">
-      <div class="stat"><span>Тикер</span><strong id="outTicker">—</strong></div>
-      <div class="stat"><span>Загружено свечей</span><strong id="outCount">—</strong></div>
-      <div class="stat"><span>Последняя свеча</span><strong id="outDate">—</strong></div>
-      <div class="stat"><span>Последнее закрытие</span><strong id="outClose">—</strong></div>
-      <div class="stat"><span>Пробои уровня</span><strong id="outBreakouts">—</strong></div>
-      <div class="stat"><span>Подтверждённые ретесты</span><strong id="outRetests">—</strong></div>
-    </div>
-  </section>
+<section class="panel">
+<div class="stats">
+<div class="stat"><span>Тикер</span><strong id="tickerOut">—</strong></div>
+<div class="stat"><span>Свечей</span><strong id="countOut">—</strong></div>
+<div class="stat"><span>Последняя дата</span><strong id="dateOut">—</strong></div>
+<div class="stat"><span>Последнее закрытие</span><strong id="closeOut">—</strong></div>
+<div class="stat"><span>Пробои</span><strong id="breakOut">—</strong></div>
+<div class="stat"><span>Ретесты</span><strong id="retestOut">—</strong></div>
+</div>
+</section>
 
-  <section class="panel">
-    <h2>График: последние 100 свечей</h2>
-    <p class="note">Зелёные свечи — рост за день, красные — снижение. Маркеры B обозначают пробой, R — подтверждённый ретест.</p>
-    <div class="chart-wrap">
-      <canvas id="chart" width="1000" height="360"></canvas>
-    </div>
-    <p id="chartInfo" class="note muted">Сначала загрузи данные.</p>
-  </section>
+<section class="panel">
+<h2>Параметры теста</h2>
+<div class="settings">
+<label class="field">Виртуальный капитал, ₽
+<input id="capital" type="number" value="1000" min="100" step="100"></label>
+<label class="field">Риск-бюджет на сделку, ₽
+<input id="riskBudget" type="number" value="20" min="1" step="1"></label>
+<label class="field">Комиссия за сторону, %
+<input id="fee" type="number" value="0.05" min="0" step="0.01"></label>
+<label class="field">Проскальзывание за сторону, ₽/акцию
+<input id="slippage" type="number" value="0.05" min="0" step="0.01"></label>
+<label class="field">Шаг цены, ₽
+<input id="tick" type="number" value="0.01" min="0.001" step="0.001"></label>
+<label class="field">Макс. удержание, свечей
+<input id="maxHold" type="number" value="60" min="1" step="1"></label>
+</div>
+<p class="note">Комиссия 0,05% и проскальзывание 0,05 ₽ — примерные настройки, а не подтверждённый тариф брокера. Перед выводами укажи реалистичные издержки.</p>
+<button id="testBtn">Сравнить 1,5R и 2R</button>
+</section>
 
-  <section class="panel">
-    <h2>Исторические сигналы</h2>
-    <p class="note">
-      Пробой: закрытие выше максимума предыдущих 20 свечей.
-      Ретест: в течение следующих 5 свечей цена возвращается к уровню
-      и закрывается не ниже него. Это исследовательские правила, а не
-      готовая торговая стратегия.
-    </p>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Дата</th>
-            <th>Сигнал</th>
-            <th>Уровень</th>
-            <th>Закрытие</th>
-            <th>Статус</th>
-          </tr>
-        </thead>
-        <tbody id="signalRows">
-          <tr><td colspan="5">Нет данных. Загрузи тикер.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+<section class="panel">
+<h2>Сравнение результатов</h2>
+<p class="note">Обе цели проверяются на одних и тех же найденных сигналах. R — первоначальный риск от входа до стопа. При ограничении одной открытой позицией число фактически открытых сделок может различаться: сделки с разными целями закрываются в разное время.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Метрика</th><th>Цель 1,5R</th><th>Цель 2R</th></tr></thead>
+<tbody id="results">
+<tr><td colspan="3">Сначала загрузи данные MOEX.</td></tr>
+</tbody>
+</table>
+</div>
+<p id="testNote" class="note">Тест ещё не запускался.</p>
+</section>
 
-  <section class="panel">
-    <h2>Важное ограничение</h2>
-    <p class="note">
-      Найденный сигнал не означает, что сделка была бы прибыльной.
-      Таблица показывает обнаруженные события, а не доходность.
-      Здесь пока не учитываются комиссии, спред, проскальзывание,
-      гэпы и исполнение ордеров. До завершения проверки торгуем только
-      на бумаге.
-    </p>
-  </section>
+<section class="panel">
+<h2>Последние 100 дневных свечей</h2>
+<canvas id="chart"></canvas>
+</section>
+
+<section class="panel">
+<h2>Исторические события</h2>
+<p class="note">Пробой: закрытие выше максимума предыдущих 20 свечей. Ретест: минимум касается уровня или опускается ниже него, а закрытие остаётся не ниже уровня в течение следующих пяти свечей. Ретест датируется фактическим днём, а не днём пробоя.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Дата</th><th>Событие</th><th>Уровень</th><th>Закрытие</th></tr></thead>
+<tbody id="events"><tr><td colspan="4">Нет данных.</td></tr></tbody>
+</table>
+</div>
+</section>
+
+<section class="panel">
+<h2>Журнал смоделированных сделок</h2>
+<p class="note">Это результаты исторической симуляции, а не реальные сделки. Показаны последние сделки для обоих вариантов.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Цель</th><th>Вход</th><th>Выход</th><th>Цена входа</th><th>Шт.</th><th>Цена выхода</th><th>Результат</th><th>Причина</th></tr></thead>
+<tbody id="tradeLog"><tr><td colspan="8">Тест не запускался.</td></tr></tbody>
+</table>
+</div>
+</section>
+
+<section class="panel">
+<h2>Ограничения теста</h2>
+<p class="note">Это упрощённый тест по дневным свечам. Он не учитывает дивиденды, налоги и корпоративные действия. Если стоп и цель достигнуты в одной свече, считается, что первым сработал стоп. Реальные исполнения могут отличаться из-за гэпов, спреда и ликвидности. Положительный результат на истории не доказывает будущую прибыльность.</p>
+</section>
 </main>
 
 <script>
@@ -152,17 +138,25 @@ th { color: #aeb9c9; font-weight: normal; }
 
 let candles = [];
 let events = [];
+let setups = [];
 
 const $ = id => document.getElementById(id);
 
-function fmt(value) {
-  return Number(value).toLocaleString("ru-RU", {
+function fmt(n) {
+  return Number(n).toLocaleString("ru-RU", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
 }
 
-function setStatus(message, error = false) {
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  })[c]);
+}
+
+function status(message, error=false) {
   $("status").textContent = message;
   $("status").className = "status " + (error ? "bad" : "");
 }
@@ -175,379 +169,441 @@ async function fetchPage(ticker, start) {
     start;
 
   const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error("MOEX вернула HTTP " + response.status);
-  }
+  if (!response.ok) throw Error("MOEX HTTP " + response.status);
 
   const json = await response.json();
   const block = json && json.candles;
 
   if (!block || !Array.isArray(block.columns) ||
       !Array.isArray(block.data)) {
-    throw new Error("Неожиданный формат ответа MOEX.");
+    throw Error("Неожиданный формат ответа MOEX.");
   }
 
-  const index = {};
-  block.columns.forEach((name, i) => { index[name] = i; });
+  const ix = {};
+  block.columns.forEach((name, i) => ix[name] = i);
 
-  const required = ["begin", "open", "close", "high", "low"];
-  for (const field of required) {
-    if (index[field] === undefined) {
-      throw new Error("В ответе MOEX отсутствует поле " + field);
-    }
+  for (const field of ["begin","open","close","high","low"]) {
+    if (ix[field] === undefined) throw Error("Нет поля " + field);
   }
 
   return block.data.map(row => ({
-    date: String(row[index.begin]).slice(0, 10),
-    open: Number(row[index.open]),
-    close: Number(row[index.close]),
-    high: Number(row[index.high]),
-    low: Number(row[index.low])
+    date: String(row[ix.begin]).slice(0,10),
+    open: Number(row[ix.open]),
+    close: Number(row[ix.close]),
+    high: Number(row[ix.high]),
+    low: Number(row[ix.low])
   })).filter(c =>
     c.date &&
-    Number.isFinite(c.open) &&
-    Number.isFinite(c.close) &&
-    Number.isFinite(c.high) &&
-    Number.isFinite(c.low) &&
-    c.high >= c.low &&
-    c.low > 0
+    [c.open,c.close,c.high,c.low].every(Number.isFinite) &&
+    c.low > 0 && c.high >= c.low
   );
 }
 
 async function loadData() {
   const ticker = $("ticker").value.trim().toUpperCase();
   const wanted = Number($("period").value);
-  const button = $("loadBtn");
+  const btn = $("loadBtn");
 
   if (!/^[A-Z0-9_-]{1,12}$/.test(ticker)) {
-    setStatus("Проверь тикер. Например: SBER или LKOH.", true);
+    status("Проверь тикер, например SBER или LKOH.", true);
     return;
   }
 
-  button.disabled = true;
+  btn.disabled = true;
   candles = [];
   events = [];
+  setups = [];
   drawChart([]);
-  $("signalRows").innerHTML =
-    '<tr><td colspan="5">Загружаем данные…</td></tr>';
 
   try {
     let all = [];
-    const batchSize = 100;
-    const maxPages = 20;
 
-    setStatus("Загружаем дневные свечи " + ticker + "…");
-
-    for (let page = 0; page < maxPages; page++) {
-      const start = page * batchSize;
-      setStatus(
-        "Загружаем " + ticker + ": получено примерно " +
-        all.length + " строк…"
-      );
-
-      const rows = await fetchPage(ticker, start);
+    for (let page=0; page<20; page++) {
+      status("Загружаем " + ticker + "… Получено строк: " + all.length);
+      const rows = await fetchPage(ticker, page*100);
       all = all.concat(rows);
-
-      if (rows.length < batchSize) break;
+      if (rows.length < 100) break;
     }
 
     const unique = new Map();
-    for (const c of all) unique.set(c.date, c);
+    all.forEach(c => unique.set(c.date,c));
 
     all = Array.from(unique.values())
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .sort((a,b) => a.date.localeCompare(b.date));
 
-    if (all.length < 21) {
-      throw new Error(
-        "Получено менее 21 корректной свечи. Проверь тикер и ответ MOEX."
-      );
+    if (all.length < 25) {
+      throw Error("Недостаточно свечей. Проверь тикер и данные MOEX.");
     }
 
     candles = all.slice(-wanted);
-    events = detectSignals(candles);
+    events = detectEvents(candles);
+    setups = makeSetups(candles);
 
     renderStats(ticker);
-    renderSignals();
+    renderEvents();
     drawChart(candles.slice(-100));
+    runTest();
 
-    const last = candles[candles.length - 1];
-    const now = new Date();
-    const ageDays = Math.floor(
-      (now.getTime() - new Date(last.date + "T00:00:00").getTime()) /
-      86400000
-    );
-
-    setStatus(
-      "Данные загружены. Последняя свеча: " + last.date +
-      ". Возраст последней свечи: " + ageDays +
-      " календарных дней. Проверь свежесть перед любым анализом."
-    );
-
-    $("chartInfo").textContent =
-      "На графике " + Math.min(100, candles.length) +
-      " свечей из " + candles.length +
-      " загруженных. Сигналы рассчитаны на всей загруженной истории.";
-  } catch (error) {
-    setStatus(
-      "Не удалось загрузить данные: " +
-      (error && error.message ? error.message : String(error)),
-      true
-    );
-    $("signalRows").innerHTML =
-      '<tr><td colspan="5">Не удалось получить данные.</td></tr>';
+    status("Загрузка завершена. Последняя свеча: " +
+      candles[candles.length-1].date +
+      ". Проверь свежесть данных перед анализом.");
+  } catch (e) {
+    status("Ошибка загрузки: " + (e.message || String(e)), true);
   } finally {
-    button.disabled = false;
+    btn.disabled = false;
   }
 }
 
-function detectSignals(data) {
-  const result = [];
-  const lookback = 20;
-  const retestWindow = 5;
+function breakoutLevel(data, i) {
+  let level = -Infinity;
+  for (let j=i-20; j<i; j++) {
+    level = Math.max(level, data[j].high);
+  }
+  return level;
+}
 
-  for (let i = lookback; i < data.length; i++) {
-    let level = -Infinity;
+function detectEvents(data) {
+  const out = [];
 
-    for (let j = i - lookback; j < i; j++) {
-      level = Math.max(level, data[j].high);
-    }
-
-    // Пробой фиксируется только по закрытию выше
-    // максимума 20 предшествующих свечей.
+  for (let i=20; i<data.length; i++) {
+    const level = breakoutLevel(data,i);
     if (data[i].close <= level) continue;
 
-    let retestIndex = -1;
+    out.push({
+      index:i, date:data[i].date, type:"Пробой",
+      level, close:data[i].close
+    });
 
-    const lastFuture = Math.min(data.length - 1, i + retestWindow);
+    for (let k=i+1; k<=Math.min(data.length-1,i+5); k++) {
+      if (data[k].low <= level && data[k].close >= level) {
+        out.push({
+          index:k, date:data[k].date, type:"Ретест",
+          level, close:data[k].close
+        });
+        break;
+      }
+    }
+  }
 
-    for (let k = i + 1; k <= lastFuture; k++) {
-      if (data[k].low <= level * 1.01 &&
-          data[k].close >= level) {
-        retestIndex = k;
+  return out;
+}
+
+function makeSetups(data) {
+  const out = [];
+  const usedRetestBars = new Set();
+
+  for (let i=20; i<data.length; i++) {
+    const level = breakoutLevel(data,i);
+    if (data[i].close <= level) continue;
+
+    for (let k=i+1; k<=Math.min(data.length-1,i+5); k++) {
+      if (data[k].low <= level && data[k].close >= level) {
+        if (!usedRetestBars.has(k)) {
+          out.push({
+            breakoutIndex:i,
+            retestIndex:k,
+            level,
+            retestLow:data[k].low
+          });
+          usedRetestBars.add(k);
+        }
+        break;
+      }
+    }
+  }
+
+  return out.sort((a,b) => a.retestIndex-b.retestIndex);
+}
+
+function renderStats(ticker) {
+  const last = candles[candles.length-1];
+  $("tickerOut").textContent = ticker;
+  $("countOut").textContent = candles.length;
+  $("dateOut").textContent = last.date;
+  $("closeOut").textContent = fmt(last.close) + " ₽";
+  $("breakOut").textContent = events.filter(e=>e.type==="Пробой").length;
+  $("retestOut").textContent = events.filter(e=>e.type==="Ретест").length;
+}
+
+function renderEvents() {
+  const body = $("events");
+
+  if (!events.length) {
+    body.innerHTML = '<tr><td colspan="4">Событий не найдено.</td></tr>';
+    return;
+  }
+
+  const sorted = events.slice().sort((a,b) =>
+    b.date.localeCompare(a.date) || b.index-a.index
+  ).slice(0,100);
+
+  body.innerHTML = sorted.map(e =>
+    "<tr><td>"+esc(e.date)+"</td><td>"+
+    (e.type==="Пробой"?"B · Пробой":"R · Ретест")+
+    "</td><td>"+fmt(e.level)+"</td><td>"+
+    fmt(e.close)+"</td></tr>"
+  ).join("");
+}
+
+function settings() {
+  const num = (id, fallback) => {
+    const v = Number($(id).value);
+    return Number.isFinite(v) ? v : fallback;
+  };
+
+  return {
+    capital:Math.max(0,num("capital",1000)),
+    risk:Math.max(0,num("riskBudget",20)),
+    fee:Math.max(0,num("fee",0.05))/100,
+    slip:Math.max(0,num("slippage",0.05)),
+    tick:Math.max(0.001,num("tick",0.01)),
+    maxHold:Math.max(1,Math.floor(num("maxHold",60)))
+  };
+}
+
+function simulate(targetR, s) {
+  let equity = s.capital;
+  let peak = equity;
+  let maxDD = 0;
+  let nextAvailable = 0;
+  let skipped = 0;
+  const trades = [];
+
+  for (const setup of setups) {
+    const entryIndex = setup.retestIndex + 1;
+
+    // Нужна следующая свеча: вход моделируется на её открытии.
+    if (entryIndex >= candles.length) continue;
+
+    // Не открываем новую позицию, пока предыдущая не закрыта.
+    if (entryIndex < nextAvailable) {
+      skipped++;
+      continue;
+    }
+
+    const entry = candles[entryIndex].open + s.slip;
+    const stop = setup.retestLow - s.tick;
+
+    if (!(entry > stop && stop > 0)) {
+      skipped++;
+      continue;
+    }
+
+    const riskPerShare = entry - stop;
+    const roundTripCostPerShare =
+      (entry + stop) * s.fee + 2*s.slip;
+
+    const qtyByRisk = Math.floor(
+      s.risk / (riskPerShare + roundTripCostPerShare)
+    );
+
+    const qtyByCash = Math.floor(
+      equity / (entry * (1+s.fee))
+    );
+
+    const qty = Math.min(qtyByRisk,qtyByCash);
+
+    if (qty < 1) {
+      skipped++;
+      continue;
+    }
+
+    const target = entry + targetR*riskPerShare;
+    const lastIndex = Math.min(
+      candles.length-1, entryIndex+s.maxHold-1
+    );
+
+    let exitIndex = lastIndex;
+    let exitRaw = candles[lastIndex].close;
+    let reason = "Истекло время";
+
+    for (let k=entryIndex; k<=lastIndex; k++) {
+      const c = candles[k];
+
+      // При гэпе ниже стопа исполняемся по открытию, а не по стоп-цене.
+      if (c.open <= stop) {
+        exitIndex=k;
+        exitRaw=c.open;
+        reason="Стоп / гэп";
+        break;
+      }
+
+      if (c.open >= target) {
+        exitIndex=k;
+        exitRaw=c.open;
+        reason="Цель / гэп вверх";
+        break;
+      }
+
+      const hitStop = c.low <= stop;
+      const hitTarget = c.high >= target;
+
+      // Если оба уровня в одной свече — консервативно считаем стоп первым.
+      if (hitStop) {
+        exitIndex=k;
+        exitRaw=stop;
+        reason=hitTarget ?
+          "Стоп: оба уровня в свече" : "Стоп";
+        break;
+      }
+
+      if (hitTarget) {
+        exitIndex=k;
+        exitRaw=target;
+        reason="Цель";
         break;
       }
     }
 
-    const hasFullWindow = i + retestWindow < data.length;
+    const exit = exitRaw - s.slip;
+    const entryCosts = qty*entry*s.fee;
+    const exitCosts = qty*Math.max(0,exit)*s.fee;
+    const pnl = qty*(exit-entry)-entryCosts-exitCosts;
 
-    result.push({
-      index: i,
-      date: data[i].date,
-      type: "Пробой",
-      level,
-      close: data[i].close,
-      status: retestIndex >= 0
-        ? "Ретест найден"
-        : hasFullWindow
-          ? "Ретест не найден за 5 свечей"
-          : "Ожидание: мало будущих свечей",
-      retestIndex
+    equity += pnl;
+    peak = Math.max(peak,equity);
+    maxDD = Math.max(maxDD,peak-equity);
+
+    trades.push({
+      entryDate:candles[entryIndex].date,
+      exitDate:candles[exitIndex].date,
+      entry,stop,target,exit,qty,pnl,reason
     });
 
-    if (retestIndex >= 0) {
-      result.push({
-        index: retestIndex,
-        date: data[retestIndex].date,
-        type: "Ретест",
-        level,
-        close: data[retestIndex].close,
-        status: "Закрытие не ниже уровня",
-        retestIndex
-      });
-    }
+    nextAvailable = exitIndex+1;
   }
 
-  return result;
+  const wins=trades.filter(t=>t.pnl>0);
+  const losses=trades.filter(t=>t.pnl<0);
+  const sum=trades.reduce((a,t)=>a+t.pnl,0);
+
+  return {
+    trades,wins:wins.length,losses:losses.length,skipped,
+    net:sum,ending:s.capital+sum,maxDD,
+    winRate:trades.length ? wins.length/trades.length*100 : 0,
+    avg:trades.length ? sum/trades.length : 0,
+    avgWin:wins.length ? wins.reduce((a,t)=>a+t.pnl,0)/wins.length : 0,
+    avgLoss:losses.length ? losses.reduce((a,t)=>a+t.pnl,0)/losses.length : 0
+  };
 }
 
-function renderStats(ticker) {
-  const last = candles[candles.length - 1];
-  $("outTicker").textContent = ticker;
-  $("outCount").textContent = candles.length;
-  $("outDate").textContent = last.date;
-  $("outClose").textContent = fmt(last.close) + " ₽";
-  $("outBreakouts").textContent =
-    events.filter(e => e.type === "Пробой").length;
-  $("outRetests").textContent =
-    events.filter(e => e.type === "Ретест").length;
+function runTest() {
+  if (candles.length < 25) return;
+
+  const s = settings();
+  const a = simulate(1.5,s);
+  const b = simulate(2,s);
+
+  const rows = [
+    ["Закрытых сделок",a.trades.length,b.trades.length],
+    ["Доля прибыльных",fmt(a.winRate)+"%",fmt(b.winRate)+"%"],
+    ["Суммарный результат после издержек",fmt(a.net)+" ₽",fmt(b.net)+" ₽"],
+    ["Средний результат на сделку",fmt(a.avg)+" ₽",fmt(b.avg)+" ₽"],
+    ["Средняя прибыль",fmt(a.avgWin)+" ₽",fmt(b.avgWin)+" ₽"],
+    ["Средний убыток",fmt(a.avgLoss)+" ₽",fmt(b.avgLoss)+" ₽"],
+    ["Максимальная просадка по закрытым сделкам",fmt(a.maxDD)+" ₽",fmt(b.maxDD)+" ₽"],
+    ["Итоговый виртуальный капитал",fmt(a.ending)+" ₽",fmt(b.ending)+" ₽"],
+    ["Пропущено / нельзя открыть",a.skipped,b.skipped]
+  ];
+
+  $("results").innerHTML = rows.map(r =>
+    "<tr><td>"+r[0]+"</td><td>"+r[1]+"</td><td>"+r[2]+"</td></tr>"
+  ).join("");
+
+  $("testNote").textContent =
+    "Найдено setup-событий: "+setups.length+
+    ". Использованы одинаковые правила сигналов, риск-бюджет "+
+    fmt(s.risk)+" ₽, максимум одна позиция. "+
+    "Результаты зависят от параметров издержек и допущений исполнения.";
+
+  renderTradeLog(a,b);
 }
 
-function renderSignals() {
-  const body = $("signalRows");
+function renderTradeLog(a,b) {
+  const all = [
+    ...a.trades.map(t=>({...t,variant:"1,5R"})),
+    ...b.trades.map(t=>({...t,variant:"2R"}))
+  ].sort((x,y)=>y.entryDate.localeCompare(x.entryDate)).slice(0,80);
 
-  if (!events.length) {
-    body.innerHTML =
-      '<tr><td colspan="5">На выбранной истории сигналов не обнаружено.</td></tr>';
+  if (!all.length) {
+    $("tradeLog").innerHTML =
+      '<tr><td colspan="8">Нет сделок, которые можно смоделировать.</td></tr>';
     return;
   }
 
-  // Сначала самые свежие события.
-  const sorted = events.slice().sort((a, b) =>
-    b.date.localeCompare(a.date) ||
-    b.index - a.index
-  );
-
-  // Ограничиваем таблицу 100 строками, чтобы мобильная страница
-  // оставалась удобной. Счётчики выше используют все события.
-  const shown = sorted.slice(0, 100);
-
-  body.innerHTML = shown.map(e => {
-    const tag = e.type === "Пробой" ? "B · Пробой" : "R · Ретест";
-    return "<tr>" +
-      "<td>" + escapeHtml(e.date) + "</td>" +
-      "<td><span class=\"tag\">" + tag + "</span></td>" +
-      "<td>" + fmt(e.level) + "</td>" +
-      "<td>" + fmt(e.close) + "</td>" +
-      "<td>" + escapeHtml(e.status) + "</td>" +
-      "</tr>";
-  }).join("");
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+  $("tradeLog").innerHTML = all.map(t =>
+    "<tr><td>"+t.variant+"</td><td>"+t.entryDate+
+    "</td><td>"+t.exitDate+"</td><td>"+fmt(t.entry)+
+    "</td><td>"+t.qty+"</td><td>"+fmt(t.exit)+
+    '</td><td class="'+(t.pnl>=0?"good":"bad")+'">'+
+    fmt(t.pnl)+" ₽</td><td>"+esc(t.reason)+"</td></tr>"
+  ).join("");
 }
 
 function drawChart(data) {
-  const canvas = $("chart");
-  const ctx = canvas.getContext("2d");
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  const width = Math.max(320, Math.floor(rect.width || 700));
-  const height = Math.max(250, Math.floor(rect.height || 360));
+  const canvas=$("chart");
+  const ctx=canvas.getContext("2d");
+  const rect=canvas.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;
+  const w=Math.max(320,Math.floor(rect.width||700));
+  const h=Math.max(240,Math.floor(rect.height||280));
 
-  canvas.width = Math.floor(width * dpr);
-  canvas.height = Math.floor(height * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#10151d";
-  ctx.fillRect(0, 0, width, height);
+  canvas.width=Math.floor(w*dpr);
+  canvas.height=Math.floor(h*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle="#10151d";
+  ctx.fillRect(0,0,w,h);
 
   if (!data.length) {
-    ctx.fillStyle = "#aeb9c9";
-    ctx.font = "14px Arial";
-    ctx.fillText("Загрузи данные, чтобы увидеть график.", 12, 28);
+    ctx.fillStyle="#aeb9c9";
+    ctx.fillText("Загрузи данные MOEX.",12,25);
     return;
   }
 
-  const padL = 12;
-  const padR = 68;
-  const padT = 18;
-  const padB = 34;
-  const plotW = width - padL - padR;
-  const plotH = height - padT - padB;
+  const left=10,right=65,top=12,bottom=27;
+  const pw=w-left-right,ph=h-top-bottom;
+  let min=Math.min(...data.map(c=>c.low));
+  let max=Math.max(...data.map(c=>c.high));
+  const range=max-min||1;
+  min-=range*.06;max+=range*.06;
 
-  let minPrice = Math.min(...data.map(c => c.low));
-  let maxPrice = Math.max(...data.map(c => c.high));
-  const range = maxPrice - minPrice || 1;
-  minPrice -= range * 0.06;
-  maxPrice += range * 0.06;
+  const y=p=>top+(max-p)/(max-min)*ph;
 
-  const y = price =>
-    padT + (maxPrice - price) / (maxPrice - minPrice) * plotH;
+  ctx.font="10px Arial";
+  ctx.strokeStyle="#283444";
+  ctx.fillStyle="#aeb9c9";
 
-  // Горизонтальная сетка и ценовые подписи.
-  ctx.font = "11px Arial";
-  ctx.strokeStyle = "#283444";
-  ctx.fillStyle = "#aeb9c9";
-  ctx.lineWidth = 1;
-
-  for (let i = 0; i <= 4; i++) {
-    const price = maxPrice - (maxPrice - minPrice) * i / 4;
-    const yy = y(price);
-    ctx.beginPath();
-    ctx.moveTo(padL, yy);
-    ctx.lineTo(width - padR + 3, yy);
-    ctx.stroke();
-    ctx.fillText(fmt(price), width - padR + 7, yy + 4);
+  for(let i=0;i<=4;i++){
+    const p=max-(max-min)*i/4,yy=y(p);
+    ctx.beginPath();ctx.moveTo(left,yy);ctx.lineTo(w-right,yy);ctx.stroke();
+    ctx.fillText(fmt(p),w-right+4,yy+3);
   }
 
-  const step = plotW / data.length;
-  const bodyW = Math.max(2, Math.min(9, step * 0.62));
+  const step=pw/data.length;
+  const bw=Math.max(2,Math.min(8,step*.6));
 
-  data.forEach((c, i) => {
-    const x = padL + step * (i + 0.5);
-    const up = c.close >= c.open;
-    const color = up ? "#35cf8a" : "#ff6577";
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = 1;
-
-    ctx.beginPath();
-    ctx.moveTo(x, y(c.high));
-    ctx.lineTo(x, y(c.low));
-    ctx.stroke();
-
-    const top = y(Math.max(c.open, c.close));
-    const bottom = y(Math.min(c.open, c.close));
-    ctx.fillRect(
-      x - bodyW / 2,
-      top,
-      bodyW,
-      Math.max(1, bottom - top)
-    );
+  data.forEach((c,i)=>{
+    const x=left+step*(i+.5);
+    const color=c.close>=c.open?"#35cf8a":"#ff6577";
+    ctx.strokeStyle=color;ctx.fillStyle=color;
+    ctx.beginPath();ctx.moveTo(x,y(c.high));ctx.lineTo(x,y(c.low));ctx.stroke();
+    const topBody=y(Math.max(c.open,c.close));
+    const bottomBody=y(Math.min(c.open,c.close));
+    ctx.fillRect(x-bw/2,topBody,bw,Math.max(1,bottomBody-topBody));
   });
 
-  // Маркеры сигналов на видимом участке графика.
-  const startIndex = Math.max(0, candles.length - data.length);
-
-  events.forEach(e => {
-    const localIndex = e.index - startIndex;
-    if (localIndex < 0 || localIndex >= data.length) return;
-
-    const c = data[localIndex];
-    const x = padL + step * (localIndex + 0.5);
-    const isBreak = e.type === "Пробой";
-    const yy = isBreak ? y(c.high) - 8 : y(c.low) + 12;
-
-    ctx.fillStyle = isBreak ? "#60a5fa" : "#f6c453";
-    ctx.font = "bold 10px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(isBreak ? "B" : "R", x, yy);
-  });
-
-  // Даты внизу графика.
-  ctx.fillStyle = "#aeb9c9";
-  ctx.font = "10px Arial";
-  ctx.textAlign = "left";
-  ctx.fillText(data[0].date, padL, height - 10);
-  ctx.textAlign = "right";
-  ctx.fillText(data[data.length - 1].date, width - padR, height - 10);
-
-  // Цена последнего закрытия.
-  const last = data[data.length - 1];
-  const lastY = y(last.close);
-  ctx.strokeStyle = "#60a5fa";
-  ctx.setLineDash([4, 3]);
-  ctx.beginPath();
-  ctx.moveTo(padL, lastY);
-  ctx.lineTo(width - padR, lastY);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.fillStyle="#aeb9c9";
+  ctx.textAlign="left";ctx.fillText(data[0].date,left,h-8);
+  ctx.textAlign="right";ctx.fillText(data[data.length-1].date,w-right,h-8);
 }
 
-$("period").addEventListener("change", () => {
-  if (!candles.length) return;
-  const wanted = Number($("period").value);
-  candles = candles.slice(-wanted);
-  events = detectSignals(candles);
-  renderStats($("ticker").value.trim().toUpperCase());
-  renderSignals();
-  drawChart(candles.slice(-100));
-  $("chartInfo").textContent =
-    "На графике " + Math.min(100, candles.length) +
-    " свечей из " + candles.length + " загруженных.";
+$("loadBtn").addEventListener("click",loadData);
+$("testBtn").addEventListener("click",runTest);
+$("period").addEventListener("change",()=>{
+  status("Для загрузки выбранного количества свечей нажми «Загрузить MOEX».");
 });
-
-window.addEventListener("resize", () => {
-  if (candles.length) drawChart(candles.slice(-100));
-  else drawChart([]);
-});
+window.addEventListener("resize",()=>drawChart(candles.slice(-100)));
 
 drawChart([]);
 </script>
