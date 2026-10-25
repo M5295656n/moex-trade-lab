@@ -4,11 +4,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MOEX Trade Lab v4.0</title>
+<title>MOEX Trade Lab v4.1</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:14px;background:#10151d;color:#e8edf5;font:15px Arial;line-height:1.5}
-main{max-width:1100px;margin:auto}
+main{max-width:1200px;margin:auto}
 h1{font-size:24px}h2{font-size:18px}
 .panel{background:#19212d;border:1px solid #303c4c;border-radius:12px;padding:14px;margin:12px 0}
 .muted,.note{color:#aeb9c9}.note{font-size:13px}
@@ -31,18 +31,26 @@ th{color:#aeb9c9}
 .good{color:#58d69b}.bad{color:#ff9d9d}
 .tag{border:1px solid #46556b;border-radius:5px;padding:2px 6px}
 .status{white-space:pre-wrap;overflow-wrap:anywhere}
-@media(min-width:760px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:760px){
+ .grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
 <main>
-<h1>MOEX Trade Lab v4.0</h1>
-<p class="muted">Историческая проверка четырёх торговых гипотез. Только бумажная торговля. Прибыльность не гарантируется.</p>
+<h1>MOEX Trade Lab v4.1</h1>
+<p class="muted">Историческая проверка четырёх гипотез. Только бумажная торговля. Результаты теста не гарантируют будущую прибыль.</p>
 
 <section class="panel">
 <div class="controls">
 <label>Тикер <input id="ticker" value="SBER" maxlength="12"></label>
-<label>Свечей <select id="period"><option value="250">250</option><option value="500" selected>500</option></select></label>
+<label>Свечей
+<select id="period">
+<option value="250">250</option>
+<option value="500" selected>500</option>
+</select>
+</label>
 <button id="loadBtn">Загрузить MOEX</button>
 <button id="testBtn">Запустить тест</button>
 </div>
@@ -62,33 +70,59 @@ th{color:#aeb9c9}
 <section class="panel">
 <h2>Параметры теста</h2>
 <div class="grid">
-<label class="field">Стартовый капитал, ₽<input id="capital" type="number" value="1000" min="100"></label>
-<label class="field">Риск на сделку, ₽<input id="riskBudget" type="number" value="20" min="1"></label>
-<label class="field">Комиссия за сторону, %<input id="fee" type="number" value="0.05" min="0" step="0.01"></label>
-<label class="field">Проскальзывание за сторону, ₽/акцию<input id="slippage" type="number" value="0.05" min="0" step="0.01"></label>
-<label class="field">Доп. спред за сторону, ₽/акцию<input id="spread" type="number" value="0" min="0" step="0.01"></label>
-<label class="field">Шаг цены, ₽<input id="tick" type="number" value="0.01" min="0.001" step="0.001"></label>
-<label class="field">Макс. удержание, свечей<input id="maxHold" type="number" value="20" min="1"></label>
-<label class="field">Разработка истории, %<input id="trainPct" type="number" value="70" min="60" max="85" step="5"></label>
+<label class="field">Стартовый капитал, ₽
+<input id="capital" type="number" value="1000" min="100">
+</label>
+<label class="field">Риск на сделку, ₽
+<input id="riskBudget" type="number" value="20" min="1">
+</label>
+<label class="field">Комиссия за сторону, %
+<input id="fee" type="number" value="0.05" min="0" step="0.01">
+</label>
+<label class="field">Проскальзывание за сторону, ₽/акцию
+<input id="slippage" type="number" value="0.05" min="0" step="0.01">
+</label>
+<label class="field">Спред, ₽ целиком
+<input id="spread" type="number" value="0" min="0" step="0.01">
+</label>
+<label class="field">Шаг цены, ₽
+<input id="tick" type="number" value="0.01" min="0.001" step="0.001">
+</label>
+<label class="field">Макс. удержание, свечей
+<input id="maxHold" type="number" value="20" min="1">
+</label>
+<label class="field">Разработка истории, %
+<input id="trainPct" type="number" value="70" min="60" max="85" step="5">
+</label>
 </div>
-<p class="note">Комиссия, спред и проскальзывание — модельные значения. Уточни фактический тариф брокера. Дневные свечи не позволяют достоверно восстановить исторический спред.</p>
+<p class="note">
+Комиссия вводится за одну сторону сделки. Спред задаётся целиком: половина учитывается при входе и половина при выходе. Проскальзывание также применяется на каждой стороне. Это модельные издержки — проверь тариф брокера. Дневные свечи не позволяют восстановить исторический спред и точный порядок движения цены внутри свечи.
+</p>
 </section>
 
 <section class="panel">
 <h2>Правила стратегий</h2>
-<p><span class="tag">A</span> <b>Откат в тренде.</b> SMA50 выше SMA100, закрытие выше SMA100, минимум касается SMA20, закрытие выше SMA20. Стоп — ниже минимума сигнальной свечи, цель 1,5R.</p>
-<p><span class="tag">B</span> <b>Краткосрочная перепроданность.</b> RSI(2) ≤ 10 и закрытие выше SMA100. Стоп — ниже минимума сигнальной свечи. Выход по стопу, сроку удержания или закрытию выше SMA5.</p>
-<p><span class="tag">C</span> <b>Пробой и ретест.</b> Закрытие выше максимума high предыдущих 20 свечей; в следующие пять свечей цена касается уровня и закрывается не ниже него. Вход после ретеста, стоп под его минимумом, цель 1,5R.</p>
-<p><span class="tag">D</span> <b>Сжатие волатильности и пробой.</b> ATR14 ниже ATR50 и закрытие выше максимума предыдущих 20 свечей. Стоп под минимумом сигнальной свечи, цель 1,5R.</p>
-<p class="note">Правила не подбираются автоматически по результатам. Сначала изучаем участок разработки, затем оцениваем более поздний вневыборочный участок.</p>
+<p><span class="tag">A</span> <b>Откат в тренде.</b> SMA50 выше SMA100, закрытие выше SMA100, минимум касается SMA20, закрытие выше SMA20. Стоп — на один шаг цены ниже минимума сигнальной свечи, цель 1,5R.</p>
+<p><span class="tag">B</span> <b>Краткосрочная перепроданность.</b> RSI(2) ≤ 10 и закрытие выше SMA100. Стоп — ниже минимума сигнальной свечи. Выход по стопу, сроку удержания или закрытию выше SMA5 с исполнением на следующем открытии.</p>
+<p><span class="tag">C</span> <b>Пробой и ретест.</b> Закрытие выше максимума high предыдущих 20 свечей; в следующие пять свечей цена касается уровня и закрывается не ниже него. Вход на следующем открытии после ретеста, стоп ниже его минимума, цель 1,5R.</p>
+<p><span class="tag">D</span> <b>Сжатие волатильности и пробой.</b> ATR14 ниже ATR50 и закрытие выше максимума предыдущих 20 свечей. Стоп ниже минимума сигнальной свечи, цель 1,5R.</p>
+<p class="note">Каждая стратегия тестируется отдельно. Ограничение одной позиции действует внутри каждой стратегии, а не на все четыре одновременно. Поэтому результаты нельзя считать результатом единого портфеля из четырёх стратегий.</p>
 </section>
 
 <section class="panel">
 <h2>Результаты</h2>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Стратегия</th><th>Участок</th><th>Сделок</th><th>Win %</th><th>Результат ₽</th><th>Среднее ₽</th><th>PF</th><th>Просадка ₽</th></tr></thead>
-<tbody id="results"><tr><td colspan="8">Нет результатов.</td></tr></tbody>
+<thead>
+<tr>
+<th>Стратегия</th><th>Участок</th><th>Сделок</th>
+<th>Win %</th><th>Чистый P/L ₽</th><th>Среднее ₽</th>
+<th>Средняя прибыль ₽</th><th>Средний убыток ₽</th>
+<th>PF</th><th>Макс. просадка ₽</th>
+<th>Конечный капитал ₽</th><th>Пропущено</th><th>Статус</th>
+</tr>
+</thead>
+<tbody id="results"><tr><td colspan="13">Нет результатов.</td></tr></tbody>
 </table>
 </div>
 <p id="summary" class="note">Сначала загрузи данные.</p>
@@ -98,22 +132,32 @@ th{color:#aeb9c9}
 <h2>Журнал сделок</h2>
 <div class="table-wrap">
 <table>
-<thead><tr><th>Стратегия</th><th>Участок</th><th>Вход</th><th>Выход</th><th>Цена входа</th><th>Шт.</th><th>Цена выхода</th><th>P/L ₽</th><th>Причина</th></tr></thead>
+<thead>
+<tr>
+<th>Стратегия</th><th>Участок</th><th>Вход</th><th>Выход</th>
+<th>Цена входа</th><th>Шт.</th><th>Цена выхода</th>
+<th>P/L ₽</th><th>Причина</th>
+</tr>
+</thead>
 <tbody id="tradeLog"><tr><td colspan="9">Нет сделок.</td></tr></tbody>
 </table>
 </div>
+<p id="logSummary" class="note"></p>
 </section>
 
 <section class="panel">
-<h2>Ограничения</h2>
+<h2>Ограничения модели</h2>
 <ul class="note">
 <li>Сигнал рассчитывается по закрытой свече; вход — на следующем открытии.</li>
-<li>В каждой стратегии одновременно допускается только одна позиция.</li>
-<li>Если в дневной свече задеты стоп и цель, первым считается стоп.</li>
-<li>Гэп может привести к фактическому убытку выше 20 ₽.</li>
-<li>Просадка рассчитывается по закрытым сделкам, без переоценки открытой позиции.</li>
-<li>Не учитываются налоги, дивиденды и корпоративные действия.</li>
-<li>Если вневыборочных сделок мало, статистики недостаточно для вывода о преимуществе.</li>
+<li>Разработка и вневыборочный период моделируются независимо, каждый с начальным капиталом из настроек. Доходность двух участков не складывается.</li>
+<li>Сигналы стратегии C не могут пересекать границу участков.</li>
+<li>При гэпе стоп исполняется по открытию, если оно хуже стоп-цены. Поэтому риск может превысить бюджет.</li>
+<li>При одновременном достижении стопа и цели внутри одной дневной свечи консервативно считается, что первым сработал стоп.</li>
+<li>При просадке на 100 ₽ от максимума капитала тест этой стратегии на данном участке прекращается. Это условие остановки теста, а не гарантия ограничения реального убытка.</li>
+<li>Максимальная просадка рассчитывается по закрытым сделкам, без переоценки открытой позиции.</li>
+<li>Не учитываются налоги, дивиденды, корпоративные действия и возможные ограничения ликвидности.</li>
+<li>RSI и ATR рассчитаны простыми средними изменениями/истинным диапазоном, а не сглаживанием Уайлдера. Результаты зависят от определения индикатора.</li>
+<li>Небольшая выборка сделок не подтверждает статистического преимущества.</li>
 </ul>
 </section>
 </main>
@@ -123,14 +167,18 @@ th{color:#aeb9c9}
 
 let candles=[];
 const $=id=>document.getElementById(id);
-const fmt=n=>Number(n).toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt=n=>Number(n).toLocaleString("ru-RU",{
+ minimumFractionDigits:2,maximumFractionDigits:2
+});
 
 function status(msg,bad=false){
  $("status").textContent=msg;
  $("status").className="status "+(bad?"bad":"");
 }
 function esc(s){
- return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ return String(s).replace(/[&<>"']/g,c=>({
+ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
 }
 function validDate(d){
  if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return false;
@@ -152,6 +200,7 @@ async function fetchPage(ticker,start){
  block.columns.forEach((n,i)=>ix[n]=i);
  for(const f of ["begin","open","close","high","low"])
   if(ix[f]===undefined)throw Error("Нет поля "+f);
+
  return block.data.map(row=>({
   date:String(row[ix.begin]??"").slice(0,10),
   open:Number(row[ix.open]),close:Number(row[ix.close]),
@@ -166,29 +215,41 @@ async function loadData(){
  const ticker=$("ticker").value.trim().toUpperCase();
  const wanted=Number($("period").value);
  $("loadBtn").disabled=true;
+ $("testBtn").disabled=true;
+
  try{
-  if(!/^[A-Z0-9_-]{1,12}$/.test(ticker))throw Error("Проверь тикер.");
+  if(!/^[A-Z0-9_-]{1,12}$/.test(ticker))
+   throw Error("Проверь тикер.");
+
   let all=[];
   for(let p=0;p<20;p++){
-   status("Загружаем "+ticker+"… Строк: "+all.length);
+   status("Загружаем "+ticker+"… Получено свечей: "+all.length);
    const page=await fetchPage(ticker,p*100);
    all=all.concat(page);
    if(page.length<100)break;
   }
+
   const unique=new Map();
   all.forEach(c=>unique.set(c.date,c));
   all=[...unique.values()].sort((a,b)=>a.date.localeCompare(b.date));
+
   if(all.length<130)throw Error("Недостаточно свечей: "+all.length);
+
   candles=all.slice(-wanted);
   $("tickerOut").textContent=ticker;
   $("countOut").textContent=candles.length;
   $("dateOut").textContent=candles.at(-1).date;
   $("closeOut").textContent=fmt(candles.at(-1).close)+" ₽";
+
   runTest();
-  status("Загрузка завершена. Последняя свеча: "+candles.at(-1).date+
-   ". Свечей: "+candles.length+".");
- }catch(e){status("Ошибка: "+(e.message||String(e)),true);}
- finally{$("loadBtn").disabled=false;}
+  status("Загрузка завершена. Последняя свеча: "+
+   candles.at(-1).date+". Свечей: "+candles.length+".");
+ }catch(e){
+  status("Ошибка: "+(e.message||String(e)),true);
+ }finally{
+  $("loadBtn").disabled=false;
+  $("testBtn").disabled=false;
+ }
 }
 
 function sma(data,i,n,field="close"){
@@ -226,132 +287,211 @@ function rsi(data,i,n){
  return 100-100/(1+(gains/n)/(losses/n));
 }
 
-function buildSignals(data){
+function buildSignals(data,start,end){
  const signals={A:[],B:[],C:[],D:[]};
- for(let i=101;i<data.length-1;i++){
-  const c=data[i],s20=sma(data,i,20),s50=sma(data,i,50),
-   s100=sma(data,i,100),s5=sma(data,i,5);
 
-  if(s50>s100&&c.close>s100&&c.low<=s20&&c.close>s20)
-   signals.A.push({i,stop:c.low,mode:"target",name:"A · Откат в тренде"});
+ // Индикаторы могут использовать историю до начала участка.
+ // Но новые сигналы и все будущие бары для ретеста ограничены участком.
+ for(let i=Math.max(101,start);i<Math.min(end,data.length-1);i++){
+  const c=data[i];
+  const s20=sma(data,i,20);
+  const s50=sma(data,i,50);
+  const s100=sma(data,i,100);
 
-  if(rsi(data,i,2)<=10&&c.close>s100)
-   signals.B.push({i,stop:c.low,mode:"sma5",name:"B · Перепроданность"});
+  if(s50>s100&&c.close>s100&&c.low<=s20&&c.close>s20){
+   signals.A.push({
+    i,stop:c.low,mode:"target",name:"A · Откат в тренде"
+   });
+  }
+
+  if(rsi(data,i,2)<=10&&c.close>s100){
+   signals.B.push({
+    i,stop:c.low,mode:"sma5",name:"B · Перепроданность"
+   });
+  }
 
   const level=highest(data,i,20);
   if(c.close>level){
-   for(let k=i+1;k<=Math.min(data.length-2,i+5);k++){
+   // Ретест и вход должны целиком помещаться в тот же участок.
+   for(let k=i+1;k<=Math.min(end-2,i+5);k++){
     if(data[k].low<=level&&data[k].close>=level){
-     signals.C.push({i:k,stop:data[k].low,mode:"target",name:"C · Пробой/ретест"});
+     signals.C.push({
+      i:k,stop:data[k].low,mode:"target",
+      name:"C · Пробой/ретест"
+     });
      break;
     }
    }
   }
 
-  if(atr(data,i,14)<atr(data,i,50)&&c.close>level)
-   signals.D.push({i,stop:c.low,mode:"target",name:"D · Сжатие + пробой"});
+  if(atr(data,i,14)<atr(data,i,50)&&c.close>level){
+   signals.D.push({
+    i,stop:c.low,mode:"target",name:"D · Сжатие + пробой"
+   });
+  }
  }
+
  for(const key of Object.keys(signals)){
   const seen=new Set();
   signals[key]=signals[key].filter(x=>{
    if(seen.has(x.i))return false;
-   seen.add(x.i);return true;
+   seen.add(x.i);
+   return true;
   }).sort((a,b)=>a.i-b.i);
  }
  return signals;
 }
 
 function settings(){
- const val=(id,d)=>Number.isFinite(Number($(id).value))?Number($(id).value):d;
+ const val=(id,d)=>Number.isFinite(Number($(id).value))
+  ?Number($(id).value):d;
+
  return {
   capital:Math.max(0,val("capital",1000)),
   risk:Math.max(0,val("riskBudget",20)),
   fee:Math.max(0,val("fee",.05))/100,
   slip:Math.max(0,val("slippage",.05)),
+  // Полный bid-ask spread. Половина на вход и половина на выход.
   spread:Math.max(0,val("spread",0)),
   tick:Math.max(.001,val("tick",.01)),
   maxHold:Math.max(1,Math.floor(val("maxHold",20))),
-  trainPct:Math.min(85,Math.max(60,val("trainPct",70)))/100
+  trainPct:Math.min(85,Math.max(60,val("trainPct",70)))/100,
+  stopDD:100
  };
 }
 
-function simulate(signals,s,start,end){
- let equity=s.capital,peak=equity,maxDD=0,nextAvailable=start;
- const trades=[];let skipped=0;
+function simulate(signals,s,start,end,segment){
+ let equity=s.capital;
+ let peak=equity,maxDD=0,nextAvailable=start;
+ const trades=[];
+ let skipped=0,stopped=false;
 
  for(const sig of signals){
+  if(stopped)break;
+
   const entryIndex=sig.i+1;
   if(sig.i<start||sig.i>=end||entryIndex>=end)continue;
-  if(entryIndex<nextAvailable){skipped++;continue;}
+
+  if(entryIndex<nextAvailable){
+   skipped++;
+   continue;
+  }
 
   const entryRaw=candles[entryIndex].open;
   const entry=entryRaw+s.slip+s.spread/2;
   const stop=sig.stop-s.tick;
-  if(!(entry>stop&&stop>0)){skipped++;continue;}
 
-  const riskShare=(entry-stop)+s.slip+s.spread+
-   (entry+stop)*s.fee;
+  if(!(entry>stop&&stop>0)){
+   skipped++;
+   continue;
+  }
+
+  // Оценка убытка на акцию при стопе, включая обе стороны
+  // комиссии, проскальзывания и половины спреда.
+  const stopFill=Math.max(0,stop-s.slip-s.spread/2);
+  const riskShare=(entry-stopFill)+s.fee*(entry+stopFill);
+
+  if(!(riskShare>0)&&Number.isFinite(riskShare)){
+   skipped++;
+   continue;
+  }
+  if(!Number.isFinite(riskShare)||riskShare<=0){
+   skipped++;
+   continue;
+  }
+
+  // Максимальный размер по риску и доступному денежному капиталу.
   const byRisk=Math.floor(s.risk/riskShare);
-  const byCash=Math.floor(equity/
-   (entry*(1+s.fee)+s.spread/2));
+  const cashPerShare=entry*(1+s.fee);
+  const byCash=Math.floor(equity/cashPerShare);
   const qty=Math.min(byRisk,byCash);
-  if(qty<1){skipped++;continue;}
+
+  if(qty<1){
+   skipped++;
+   continue;
+  }
 
   const target=entry+1.5*(entry-stop);
   const last=Math.min(end-1,entryIndex+s.maxHold-1);
-  let exitIndex=last,exitRaw=candles[last].close;
-  let reason=last===candles.length-1?"Конец данных":"Макс. срок";
+  let exitIndex=last;
+  let exitRaw=candles[last].close;
+  let reason=last===candles.length-1
+   ?"Конец данных":"Макс. срок";
 
   for(let k=entryIndex;k<=last;k++){
    const c=candles[k];
 
+   // Если открытие уже за стопом, моделируем исполнение по открытию.
    if(c.open<=stop){
-    exitIndex=k;exitRaw=c.open;reason="Стоп / гэп";break;
+    exitIndex=k;
+    exitRaw=c.open;
+    reason="Стоп / гэп";
+    break;
    }
+
+   // Если открытие выше цели, исполнение по открытию.
    if(sig.mode==="target"&&c.open>=target){
-    exitIndex=k;exitRaw=c.open;reason="Цель / гэп";break;
+    exitIndex=k;
+    exitRaw=c.open;
+    reason="Цель / гэп";
+    break;
    }
 
    const stopHit=c.low<=stop;
    const targetHit=sig.mode==="target"&&c.high>=target;
 
    if(stopHit){
-    exitIndex=k;exitRaw=stop;
+    exitIndex=k;
+    exitRaw=stop;
     reason=targetHit?"Стоп: оба уровня в свече":"Стоп";
     break;
    }
+
    if(targetHit){
-    exitIndex=k;exitRaw=target;reason="Цель";break;
+    exitIndex=k;
+    exitRaw=target;
+    reason="Цель";
+    break;
    }
 
    if(sig.mode==="sma5"&&c.close>sma(candles,k,5)){
     if(k+1<end){
-     exitIndex=k+1;exitRaw=candles[k+1].open;
+     exitIndex=k+1;
+     exitRaw=candles[k+1].open;
      reason="Выход по SMA5";
     }else{
-     exitIndex=k;exitRaw=c.close;reason="SMA5: конец участка";
+     exitIndex=k;
+     exitRaw=c.close;
+     reason="SMA5: конец участка";
     }
     break;
    }
   }
 
+  // Исполнение: спред и проскальзывание уже включены в цены.
+  // Поэтому отдельно повторно стоимость спреда НЕ вычитаем.
   const exit=Math.max(0,exitRaw-s.slip-s.spread/2);
   const commission=qty*(entry+exit)*s.fee;
-  const spreadCost=qty*s.spread;
-  const pnl=qty*(exit-entry)-commission-spreadCost;
+  const pnl=qty*(exit-entry)-commission;
 
   equity+=pnl;
   peak=Math.max(peak,equity);
   maxDD=Math.max(maxDD,peak-equity);
 
   trades.push({
-   name:sig.name,
+   name:sig.name,segment,
    entryDate:candles[entryIndex].date,
    exitDate:candles[exitIndex].date,
    entry,exit,qty,pnl,reason,
-   segment:start===0?"Разработка":"Вне выборки"
+   equityAfter:equity
   });
+
   nextAvailable=exitIndex+1;
+
+  // Остановка при падении на 100 ₽ от пика капитала.
+  if(peak-equity>=s.stopDD){
+   stopped=true;
+  }
  }
 
  const wins=trades.filter(t=>t.pnl>0);
@@ -364,54 +504,116 @@ function simulate(signals,s,start,end){
   trades,skipped,net,
   winRate:trades.length?wins.length/trades.length*100:0,
   avg:trades.length?net/trades.length:0,
+  avgWin:wins.length?grossWin/wins.length:0,
+  avgLoss:losses.length?-grossLoss/losses.length:0,
   pf:grossLoss?grossWin/grossLoss:(grossWin?Infinity:0),
-  maxDD,ending:s.capital+net
+  maxDD,ending:s.capital+net,
+  stopped,peak
  };
 }
 
 function row(name,segment,r){
- const pf=Number.isFinite(r.pf)?fmt(r.pf):(r.pf===Infinity?"∞":"—");
- return `<tr><td>${esc(name)}</td><td>${segment}</td><td>${r.trades.length}</td>
+ const pf=Number.isFinite(r.pf)?fmt(r.pf):
+  (r.pf===Infinity?"∞":"—");
+ const state=r.stopped
+  ?"Остановлено: просадка"
+  :(r.trades.length?"Завершено":"Нет сделок");
+
+ return `<tr>
+ <td>${esc(name)}</td>
+ <td>${esc(segment)}</td>
+ <td>${r.trades.length}</td>
  <td>${fmt(r.winRate)}%</td>
  <td class="${r.net>=0?"good":"bad"}">${fmt(r.net)}</td>
- <td>${fmt(r.avg)}</td><td>${pf}</td><td>${fmt(r.maxDD)}</td></tr>`;
+ <td>${fmt(r.avg)}</td>
+ <td>${fmt(r.avgWin)}</td>
+ <td>${fmt(r.avgLoss)}</td>
+ <td>${pf}</td>
+ <td>${fmt(r.maxDD)}</td>
+ <td>${fmt(r.ending)}</td>
+ <td>${r.skipped}</td>
+ <td>${state}</td>
+ </tr>`;
 }
 
 function runTest(){
- if(candles.length<130){status("Сначала загрузи не менее 130 свечей.",true);return;}
- const s=settings(),split=Math.floor(candles.length*s.trainPct);
- const signals=buildSignals(candles);
+ if(candles.length<130){
+  status("Сначала загрузи не менее 130 свечей.",true);
+  return;
+ }
+
+ const s=settings();
+ const split=Math.floor(candles.length*s.trainPct);
  const names={
-  A:"A · Откат в тренде",B:"B · Перепроданность",
-  C:"C · Пробой/ретест",D:"D · Сжатие + пробой"
+  A:"A · Откат в тренде",
+  B:"B · Перепроданность",
+  C:"C · Пробой/ретест",
+  D:"D · Сжатие + пробой"
  };
+
  const rows=[],trades=[],notes=[];
 
  for(const key of ["A","B","C","D"]){
-  const arr=signals[key];
-  const train=simulate(arr,s,0,split);
-  const test=simulate(arr,s,split,candles.length);
+  // Строим сигналы независимо для каждого временного участка.
+  const trainSignals=buildSignals(candles,0,split);
+  const testSignals=buildSignals(candles,split,candles.length);
+
+  const train=simulate(
+   trainSignals[key],s,0,split,"Разработка"
+  );
+  const test=simulate(
+   testSignals[key],s,split,candles.length,"Вне выборки"
+  );
+
   rows.push(row(names[key],"Разработка",train));
   rows.push(row(names[key],"Вне выборки",test));
+
   trades.push(...train.trades,...test.trades);
-  notes.push(`${key}: сигналов ${arr.length}; разработка ${train.trades.length} сделок, ${fmt(train.net)} ₽; вне выборки ${test.trades.length} сделок, ${fmt(test.net)} ₽`);
+
+  notes.push(
+   `${key}: сигналы — разработка ${trainSignals[key].length}, `+
+   `вне выборки ${testSignals[key].length}; `+
+   `P/L — ${fmt(train.net)} ₽ / ${fmt(test.net)} ₽`
+  );
  }
 
  $("results").innerHTML=rows.join("");
- trades.sort((a,b)=>b.entryDate.localeCompare(a.entryDate));
- $("tradeLog").innerHTML=trades.slice(0,150).map(t=>
-  `<tr><td>${esc(t.name)}</td><td>${t.segment}</td>
-  <td>${t.entryDate}</td><td>${t.exitDate}</td>
-  <td>${fmt(t.entry)}</td><td>${t.qty}</td><td>${fmt(t.exit)}</td>
-  <td class="${t.pnl>=0?"good":"bad"}">${fmt(t.pnl)}</td>
-  <td>${esc(t.reason)}</td></tr>`
+
+ // Полный журнал. Ничего не обрезаем до 150 сделок.
+ trades.sort((a,b)=>
+  b.entryDate.localeCompare(a.entryDate)||
+  a.name.localeCompare(b.name)
+ );
+
+ $("tradeLog").innerHTML=trades.map(t=>
+  `<tr>
+   <td>${esc(t.name)}</td>
+   <td>${esc(t.segment)}</td>
+   <td>${t.entryDate}</td>
+   <td>${t.exitDate}</td>
+   <td>${fmt(t.entry)}</td>
+   <td>${t.qty}</td>
+   <td>${fmt(t.exit)}</td>
+   <td class="${t.pnl>=0?"good":"bad"}">${fmt(t.pnl)}</td>
+   <td>${esc(t.reason)}</td>
+  </tr>`
  ).join("")||'<tr><td colspan="9">Нет сделок.</td></tr>';
 
  $("summary").textContent=
   `Граница участков: ${candles[split]?.date||"—"}. `+
+  `Разработка: ${candles[0].date} — ${candles[split-1].date}. `+
+  `Вне выборки: ${candles[split].date} — ${candles.at(-1).date}. `+
   notes.join(" | ")+
-  ". Малое количество вневыборочных сделок не подтверждает преимущество.";
- status("Тест завершён. Изучи результаты и журнал сделок.");
+  ". Каждый участок начинает тест с заданного стартового капитала. "+
+  "Результаты разработки и вне выборки не объединяются.";
+
+ $("logSummary").textContent=
+  `Всего отображено закрытых сделок: ${trades.length}. `+
+  "Стратегии тестируются независимо; совпадающие сделки разных стратегий "+
+  "не означают, что их можно одновременно открыть на один капитал.";
+
+ status("Тест завершён. Сначала оцени вневыборочные результаты, "+
+  "количество сделок и издержки.");
 }
 
 $("loadBtn").addEventListener("click",loadData);
