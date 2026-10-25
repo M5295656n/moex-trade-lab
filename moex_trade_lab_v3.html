@@ -1,623 +1,1142 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MOEX Trade Lab v4.1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOEX Trade Lab v5.0 — Turtle System 1</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;padding:14px;background:#10151d;color:#e8edf5;font:15px Arial;line-height:1.5}
-main{max-width:1200px;margin:auto}
-h1{font-size:24px}h2{font-size:18px}
-.panel{background:#19212d;border:1px solid #303c4c;border-radius:12px;padding:14px;margin:12px 0}
-.muted,.note{color:#aeb9c9}.note{font-size:13px}
-.controls,.grid{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-input,select,button{padding:10px;border-radius:8px;border:1px solid #46556b;font-size:15px;min-height:42px}
-input,select{background:#10151d;color:white;max-width:100%}
-input{width:105px}button{background:#3983e8;color:white;font-weight:bold}
-button:disabled{opacity:.5}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-.field{display:flex;flex-direction:column;gap:4px;color:#aeb9c9;font-size:13px}
-.field input{width:100%}
-.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.stat{background:#10151d;padding:10px;border-radius:8px;overflow-wrap:anywhere}
-.stat span{display:block;color:#aeb9c9;font-size:12px}
-.stat strong{display:block;margin-top:5px}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th,td{padding:8px;border-bottom:1px solid #303c4c;text-align:left;white-space:nowrap}
-th{color:#aeb9c9}
-.good{color:#58d69b}.bad{color:#ff9d9d}
-.tag{border:1px solid #46556b;border-radius:5px;padding:2px 6px}
-.status{white-space:pre-wrap;overflow-wrap:anywhere}
-@media(min-width:760px){
- .grid{grid-template-columns:repeat(4,minmax(0,1fr))}
- .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+:root {
+  color-scheme: dark;
+  --bg: #10141c;
+  --panel: #191f2b;
+  --panel2: #202838;
+  --border: #303b4d;
+  --text: #edf2fa;
+  --muted: #9ba9bc;
+  --green: #45d6a0;
+  --red: #ff777f;
+  --blue: #75a9ff;
+  --yellow: #f2c96d;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, sans-serif;
+}
+main { max-width: 1150px; margin: 0 auto; }
+h1 { font-size: 25px; margin: 0 0 5px; }
+h2 { font-size: 18px; margin: 0 0 14px; }
+h3 { font-size: 15px; margin: 0 0 9px; }
+p { margin: 7px 0; }
+.sub, .muted { color: var(--muted); }
+.sub { margin-bottom: 18px; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 16px;
+  margin: 13px 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.field { min-width: 0; }
+label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+input, select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary { background: var(--green); color: #06281c; }
+.secondary { background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
+button:disabled { opacity: .5; cursor: wait; }
+.actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+.notice {
+  padding: 11px 13px;
+  border-radius: 8px;
+  background: var(--panel2);
+  color: var(--muted);
+  margin-top: 10px;
+}
+.status { white-space: pre-wrap; overflow-wrap: anywhere; }
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.metric {
+  background: var(--panel2);
+  border-radius: 9px;
+  padding: 12px;
+  min-width: 0;
+}
+.metric .name { color: var(--muted); font-size: 12px; }
+.metric .value { font-size: 21px; font-weight: 750; overflow-wrap: anywhere; }
+.good { color: var(--green); }
+.bad { color: var(--red); }
+.warn { color: var(--yellow); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  vertical-align: top;
+  white-space: nowrap;
+}
+th {
+  color: var(--muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+}
+th:first-child, td:first-child { text-align: left; }
+.table-wrap { overflow: auto; max-height: 470px; }
+details { margin-top: 10px; }
+summary { cursor: pointer; color: var(--blue); padding: 6px 0; }
+.small { font-size: 12px; }
+ul { padding-left: 20px; }
+li { margin: 5px 0; }
+@media (max-width: 760px) {
+  body { padding: 10px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel { padding: 12px; }
+  h1 { font-size: 21px; }
+}
+@media (max-width: 360px) {
+  .grid { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
 <main>
-<h1>MOEX Trade Lab v4.1</h1>
-<p class="muted">Историческая проверка четырёх гипотез. Только бумажная торговля. Результаты теста не гарантируют будущую прибыль.</p>
+  <h1>MOEX Trade Lab v5.0</h1>
+  <div class="sub">Бумажное тестирование · Turtle System 1 · Московская биржа</div>
 
-<section class="panel">
-<div class="controls">
-<label>Тикер <input id="ticker" value="SBER" maxlength="12"></label>
-<label>Свечей
-<select id="period">
-<option value="250">250</option>
-<option value="500" selected>500</option>
-</select>
-</label>
-<button id="loadBtn">Загрузить MOEX</button>
-<button id="testBtn">Запустить тест</button>
-</div>
-<p id="status" class="status">Загрузи исторические данные.</p>
-</section>
+  <section class="panel">
+    <h2>1. Данные и параметры</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="ticker">Тикер MOEX</label>
+        <input id="ticker" value="SBER" maxlength="20">
+      </div>
+      <div class="field">
+        <label for="fromDate">Начало данных</label>
+        <input id="fromDate" type="date" value="2024-01-01">
+      </div>
+      <div class="field">
+        <label for="bars">Максимум свечей</label>
+        <select id="bars">
+          <option value="250">250</option>
+          <option value="500" selected>500</option>
+          <option value="1000">1000</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="capital">Капитал на каждый тест, ₽</label>
+        <input id="capital" type="number" value="1000" min="100" step="100">
+      </div>
+      <div class="field">
+        <label for="risk">Риск на сделку, ₽</label>
+        <input id="risk" type="number" value="20" min="1" step="1">
+      </div>
+      <div class="field">
+        <label for="fee">Комиссия за сторону, %</label>
+        <input id="fee" type="number" value="0.05" min="0" step="0.01">
+      </div>
+      <div class="field">
+        <label for="slippage">Проскальзывание, ₽/акцию/сторону</label>
+        <input id="slippage" type="number" value="0.05" min="0" step="0.01">
+      </div>
+      <div class="field">
+        <label for="spread">Спред, ₽</label>
+        <input id="spread" type="number" value="0" min="0" step="0.01">
+      </div>
+      <div class="field">
+        <label for="tick">Шаг цены, ₽</label>
+        <input id="tick" type="number" value="0.01" min="0.001" step="0.001">
+      </div>
+      <div class="field">
+        <label for="atrMult">Стоп, множитель ATR</label>
+        <input id="atrMult" type="number" value="2" min="0.1" step="0.1">
+      </div>
+      <div class="field">
+        <label for="maxHold">Макс. удержание, свечей</label>
+        <input id="maxHold" type="number" value="60" min="1" step="1">
+      </div>
+      <div class="field">
+        <label for="maxDD">Остановка при просадке от пика, ₽</label>
+        <input id="maxDD" type="number" value="100" min="0" step="10">
+      </div>
+    </div>
+    <div class="actions">
+      <button id="loadBtn" class="primary" onclick="loadData()">Загрузить данные и протестировать</button>
+      <button class="secondary" onclick="downloadCSV()">Скачать журнал CSV</button>
+    </div>
+    <div id="status" class="notice status">Ожидание запуска.</div>
+    <div class="notice small">
+      Только виртуальные сделки. Комиссия, половина спреда и проскальзывание учитываются
+      при расчёте исполнения. Результаты не являются прогнозом будущей доходности.
+    </div>
+  </section>
 
-<section class="panel">
-<h2>Последние данные</h2>
-<div class="stats">
-<div class="stat"><span>Тикер</span><strong id="tickerOut">—</strong></div>
-<div class="stat"><span>Свечей</span><strong id="countOut">—</strong></div>
-<div class="stat"><span>Последняя дата</span><strong id="dateOut">—</strong></div>
-<div class="stat"><span>Последнее закрытие</span><strong id="closeOut">—</strong></div>
-</div>
-</section>
+  <section class="panel">
+    <h2>2. Правила стратегии</h2>
+    <ul>
+      <li><b>Направление:</b> только длинные позиции, без плеча.</li>
+      <li><b>Сигнал:</b> дневное закрытие выше максимума High за 20 предыдущих свечей. Текущая свеча в расчёт максимума не входит.</li>
+      <li><b>Вход:</b> открытие следующей дневной свечи.</li>
+      <li><b>Волатильность:</b> ATR(20) по методу Уайлдера.</li>
+      <li><b>Стоп:</b> цена входа минус 2 × ATR(20), с округлением вниз до шага цены.</li>
+      <li><b>Выход:</b> закрытие ниже минимума Low за 10 предыдущих свечей; выход на следующем открытии.</li>
+      <li><b>Дополнительный выход:</b> по максимальному сроку удержания или в конце тестового сегмента.</li>
+      <li><b>Размер позиции:</b> рассчитывается так, чтобы модельный убыток до стопа с издержками не превышал риск-бюджет, насколько это возможно при целочисленном количестве акций.</li>
+      <li><b>Пирамидинг:</b> отключён. Одновременно только одна позиция.</li>
+    </ul>
+    <div class="notice small">
+      Это упрощённая адаптация Turtle System 1, а не полная оригинальная система:
+      здесь нет коротких позиций, пирамидинга и оригинального правила пропуска
+      повторного сигнала. Для акций дополнительно действует ограничение доступного капитала.
+    </div>
+  </section>
 
-<section class="panel">
-<h2>Параметры теста</h2>
-<div class="grid">
-<label class="field">Стартовый капитал, ₽
-<input id="capital" type="number" value="1000" min="100">
-</label>
-<label class="field">Риск на сделку, ₽
-<input id="riskBudget" type="number" value="20" min="1">
-</label>
-<label class="field">Комиссия за сторону, %
-<input id="fee" type="number" value="0.05" min="0" step="0.01">
-</label>
-<label class="field">Проскальзывание за сторону, ₽/акцию
-<input id="slippage" type="number" value="0.05" min="0" step="0.01">
-</label>
-<label class="field">Спред, ₽ целиком
-<input id="spread" type="number" value="0" min="0" step="0.01">
-</label>
-<label class="field">Шаг цены, ₽
-<input id="tick" type="number" value="0.01" min="0.001" step="0.001">
-</label>
-<label class="field">Макс. удержание, свечей
-<input id="maxHold" type="number" value="20" min="1">
-</label>
-<label class="field">Разработка истории, %
-<input id="trainPct" type="number" value="70" min="60" max="85" step="5">
-</label>
-</div>
-<p class="note">
-Комиссия вводится за одну сторону сделки. Спред задаётся целиком: половина учитывается при входе и половина при выходе. Проскальзывание также применяется на каждой стороне. Это модельные издержки — проверь тариф брокера. Дневные свечи не позволяют восстановить исторический спред и точный порядок движения цены внутри свечи.
-</p>
-</section>
+  <section class="panel">
+    <h2>3. Сводка теста</h2>
+    <div id="summary" class="muted">Сначала загрузи исторические данные.</div>
+  </section>
 
-<section class="panel">
-<h2>Правила стратегий</h2>
-<p><span class="tag">A</span> <b>Откат в тренде.</b> SMA50 выше SMA100, закрытие выше SMA100, минимум касается SMA20, закрытие выше SMA20. Стоп — на один шаг цены ниже минимума сигнальной свечи, цель 1,5R.</p>
-<p><span class="tag">B</span> <b>Краткосрочная перепроданность.</b> RSI(2) ≤ 10 и закрытие выше SMA100. Стоп — ниже минимума сигнальной свечи. Выход по стопу, сроку удержания или закрытию выше SMA5 с исполнением на следующем открытии.</p>
-<p><span class="tag">C</span> <b>Пробой и ретест.</b> Закрытие выше максимума high предыдущих 20 свечей; в следующие пять свечей цена касается уровня и закрывается не ниже него. Вход на следующем открытии после ретеста, стоп ниже его минимума, цель 1,5R.</p>
-<p><span class="tag">D</span> <b>Сжатие волатильности и пробой.</b> ATR14 ниже ATR50 и закрытие выше максимума предыдущих 20 свечей. Стоп ниже минимума сигнальной свечи, цель 1,5R.</p>
-<p class="note">Каждая стратегия тестируется отдельно. Ограничение одной позиции действует внутри каждой стратегии, а не на все четыре одновременно. Поэтому результаты нельзя считать результатом единого портфеля из четырёх стратегий.</p>
-</section>
+  <section class="panel">
+    <h2>4. Диагностика сигналов</h2>
+    <p class="muted small">
+      Диагностика помогает отличить отсутствие рыночных сигналов от ситуации,
+      когда сигналы были, но сделка не открылась из-за позиции, цены или капитала.
+    </p>
+    <div class="table-wrap">
+      <table id="diagnostics">
+        <thead>
+          <tr><th>Показатель</th><th>Разработка</th><th>Вне выборки</th></tr>
+        </thead>
+        <tbody><tr><td colspan="3">Данных пока нет</td></tr></tbody>
+      </table>
+    </div>
+  </section>
 
-<section class="panel">
-<h2>Результаты</h2>
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-<th>Стратегия</th><th>Участок</th><th>Сделок</th>
-<th>Win %</th><th>Чистый P/L ₽</th><th>Среднее ₽</th>
-<th>Средняя прибыль ₽</th><th>Средний убыток ₽</th>
-<th>PF</th><th>Макс. просадка ₽</th>
-<th>Конечный капитал ₽</th><th>Пропущено</th><th>Статус</th>
-</tr>
-</thead>
-<tbody id="results"><tr><td colspan="13">Нет результатов.</td></tr></tbody>
-</table>
-</div>
-<p id="summary" class="note">Сначала загрузи данные.</p>
-</section>
+  <section class="panel">
+    <h2>5. Результаты по периодам</h2>
+    <div class="table-wrap">
+      <table id="results">
+        <thead>
+          <tr>
+            <th>Показатель</th>
+            <th>Разработка</th>
+            <th>Вне выборки</th>
+          </tr>
+        </thead>
+        <tbody><tr><td colspan="3">Данных пока нет</td></tr></tbody>
+      </table>
+    </div>
+    <div class="notice small">
+      Период разработки — первые 70% свечей теста, вневыборочный период — оставшиеся 30%.
+      Индикаторы используют предшествующую историю для разогрева, но новые сигналы ищутся
+      только внутри соответствующего сегмента. Капитал в каждом сегменте начинается заново.
+      Это не устраняет всех рисков подгонки и не заменяет проверку на других инструментах.
+    </div>
+  </section>
 
-<section class="panel">
-<h2>Журнал сделок</h2>
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-<th>Стратегия</th><th>Участок</th><th>Вход</th><th>Выход</th>
-<th>Цена входа</th><th>Шт.</th><th>Цена выхода</th>
-<th>P/L ₽</th><th>Причина</th>
-</tr>
-</thead>
-<tbody id="tradeLog"><tr><td colspan="9">Нет сделок.</td></tr></tbody>
-</table>
-</div>
-<p id="logSummary" class="note"></p>
-</section>
+  <section class="panel">
+    <h2>6. Журнал виртуальных сделок</h2>
+    <div class="table-wrap">
+      <table id="journal">
+        <thead>
+          <tr>
+            <th>#</th><th>Сегмент</th><th>Вход</th><th>Выход</th>
+            <th>Кол-во</th><th>Цена входа</th><th>Цена выхода</th>
+            <th>Стоп</th><th>Результат, ₽</th><th>Причина выхода</th>
+          </tr>
+        </thead>
+        <tbody><tr><td colspan="10">Сделок пока нет</td></tr></tbody>
+      </table>
+    </div>
+    <details>
+      <summary>Показать пропущенные сигналы</summary>
+      <div class="table-wrap">
+        <table id="skipped">
+          <thead>
+            <tr><th>Дата сигнала</th><th>Сегмент</th><th>Причина</th><th>Закрытие</th><th>ATR(20)</th></tr>
+          </thead>
+          <tbody><tr><td colspan="5">Данных пока нет</td></tr></tbody>
+        </table>
+      </div>
+    </details>
+    <details>
+      <summary>Показать последние загруженные свечи</summary>
+      <div class="table-wrap">
+        <table id="candles">
+          <thead>
+            <tr><th>Дата</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Объём</th><th>ATR(20)</th></tr>
+          </thead>
+          <tbody><tr><td colspan="7">Данных пока нет</td></tr></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
 
-<section class="panel">
-<h2>Ограничения модели</h2>
-<ul class="note">
-<li>Сигнал рассчитывается по закрытой свече; вход — на следующем открытии.</li>
-<li>Разработка и вневыборочный период моделируются независимо, каждый с начальным капиталом из настроек. Доходность двух участков не складывается.</li>
-<li>Сигналы стратегии C не могут пересекать границу участков.</li>
-<li>При гэпе стоп исполняется по открытию, если оно хуже стоп-цены. Поэтому риск может превысить бюджет.</li>
-<li>При одновременном достижении стопа и цели внутри одной дневной свечи консервативно считается, что первым сработал стоп.</li>
-<li>При просадке на 100 ₽ от максимума капитала тест этой стратегии на данном участке прекращается. Это условие остановки теста, а не гарантия ограничения реального убытка.</li>
-<li>Максимальная просадка рассчитывается по закрытым сделкам, без переоценки открытой позиции.</li>
-<li>Не учитываются налоги, дивиденды, корпоративные действия и возможные ограничения ликвидности.</li>
-<li>RSI и ATR рассчитаны простыми средними изменениями/истинным диапазоном, а не сглаживанием Уайлдера. Результаты зависят от определения индикатора.</li>
-<li>Небольшая выборка сделок не подтверждает статистического преимущества.</li>
-</ul>
-</section>
+  <section class="panel">
+    <h2>7. Как интерпретировать результат</h2>
+    <ul>
+      <li>Положительный результат на небольшом числе сделок не доказывает преимущество стратегии.</li>
+      <li>Сравнивай чистую прибыль после издержек, математическое ожидание, profit factor и максимальную просадку.</li>
+      <li>Смотри на число сигналов и пропусков: ноль сделок может означать как отсутствие пробоев, так и ограничения капитала.</li>
+      <li>Проверяй стратегию на нескольких ликвидных бумагах и разных рыночных режимах.</li>
+      <li>Не меняй параметры только ради улучшения уже увиденного исторического результата. Новые параметры проверяй на отдельном будущем отрезке.</li>
+      <li>Для настоящего тестирования нужны реалистичные издержки, корпоративные события, учёт ликвидности и проверка качества исходных данных.</li>
+    </ul>
+  </section>
 </main>
 
 <script>
 "use strict";
 
-let candles=[];
-const $=id=>document.getElementById(id);
-const fmt=n=>Number(n).toLocaleString("ru-RU",{
- minimumFractionDigits:2,maximumFractionDigits:2
-});
+let candles = [];
+let trades = [];
+let skippedSignals = [];
+let testResults = null;
+let lastDiagnostics = null;
 
-function status(msg,bad=false){
- $("status").textContent=msg;
- $("status").className="status "+(bad?"bad":"");
-}
-function esc(s){
- return String(s).replace(/[&<>"']/g,c=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
- }[c]));
-}
-function validDate(d){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return false;
- const x=new Date(d+"T00:00:00Z");
- return Number.isFinite(x.getTime())&&x.toISOString().slice(0,10)===d;
+const $ = id => document.getElementById(id);
+
+function num(id) {
+  return Number($(id).value);
 }
 
-async function fetchPage(ticker,start){
- const url="https://iss.moex.com/iss/engines/stock/markets/shares/securities/"+
- encodeURIComponent(ticker)+
- "/candles.json?from=2024-01-01&interval=24&iss.meta=off&limit=100&start="+start;
- const response=await fetch(url);
- if(!response.ok)throw Error("MOEX HTTP "+response.status);
- const json=await response.json();
- const block=json?.candles;
- if(!block||!Array.isArray(block.columns)||!Array.isArray(block.data))
-  throw Error("Неожиданный формат ответа MOEX");
- const ix={};
- block.columns.forEach((n,i)=>ix[n]=i);
- for(const f of ["begin","open","close","high","low"])
-  if(ix[f]===undefined)throw Error("Нет поля "+f);
-
- return block.data.map(row=>({
-  date:String(row[ix.begin]??"").slice(0,10),
-  open:Number(row[ix.open]),close:Number(row[ix.close]),
-  high:Number(row[ix.high]),low:Number(row[ix.low])
- })).filter(c=>validDate(c.date)&&
-  [c.open,c.close,c.high,c.low].every(Number.isFinite)&&
-  c.low>0&&c.high>=Math.max(c.open,c.close)&&
-  c.low<=Math.min(c.open,c.close));
+function fmt(value, digits = 2) {
+  if (!Number.isFinite(value)) return "—";
+  return value.toLocaleString("ru-RU", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  });
 }
 
-async function loadData(){
- const ticker=$("ticker").value.trim().toUpperCase();
- const wanted=Number($("period").value);
- $("loadBtn").disabled=true;
- $("testBtn").disabled=true;
+function money(value) {
+  return fmt(value, 2) + " ₽";
+}
 
- try{
-  if(!/^[A-Z0-9_-]{1,12}$/.test(ticker))
-   throw Error("Проверь тикер.");
+function pct(value) {
+  return Number.isFinite(value) ? fmt(value, 2) + "%" : "—";
+}
 
-  let all=[];
-  for(let p=0;p<20;p++){
-   status("Загружаем "+ticker+"… Получено свечей: "+all.length);
-   const page=await fetchPage(ticker,p*100);
-   all=all.concat(page);
-   if(page.length<100)break;
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[ch]);
+}
+
+function setStatus(message) {
+  $("status").textContent = message;
+}
+
+function validateSettings() {
+  const ticker = $("ticker").value.trim().toUpperCase();
+
+  if (!/^[A-Z0-9_-]{1,20}$/.test(ticker)) {
+    throw new Error("Укажи корректный тикер, например SBER или LKOH.");
   }
 
-  const unique=new Map();
-  all.forEach(c=>unique.set(c.date,c));
-  all=[...unique.values()].sort((a,b)=>a.date.localeCompare(b.date));
-
-  if(all.length<130)throw Error("Недостаточно свечей: "+all.length);
-
-  candles=all.slice(-wanted);
-  $("tickerOut").textContent=ticker;
-  $("countOut").textContent=candles.length;
-  $("dateOut").textContent=candles.at(-1).date;
-  $("closeOut").textContent=fmt(candles.at(-1).close)+" ₽";
-
-  runTest();
-  status("Загрузка завершена. Последняя свеча: "+
-   candles.at(-1).date+". Свечей: "+candles.length+".");
- }catch(e){
-  status("Ошибка: "+(e.message||String(e)),true);
- }finally{
-  $("loadBtn").disabled=false;
-  $("testBtn").disabled=false;
- }
-}
-
-function sma(data,i,n,field="close"){
- if(i-n+1<0)return NaN;
- let sum=0;
- for(let k=i-n+1;k<=i;k++)sum+=data[k][field];
- return sum/n;
-}
-function highest(data,i,n,field="high"){
- if(i-n<0)return NaN;
- let value=-Infinity;
- for(let k=i-n;k<i;k++)value=Math.max(value,data[k][field]);
- return value;
-}
-function tr(data,i){
- if(i===0)return data[i].high-data[i].low;
- return Math.max(data[i].high-data[i].low,
-  Math.abs(data[i].high-data[i-1].close),
-  Math.abs(data[i].low-data[i-1].close));
-}
-function atr(data,i,n){
- if(i-n+1<1)return NaN;
- let sum=0;
- for(let k=i-n+1;k<=i;k++)sum+=tr(data,k);
- return sum/n;
-}
-function rsi(data,i,n){
- if(i-n<0)return NaN;
- let gains=0,losses=0;
- for(let k=i-n+1;k<=i;k++){
-  const d=data[k].close-data[k-1].close;
-  if(d>0)gains+=d;else losses-=d;
- }
- if(losses===0)return gains===0?50:100;
- return 100-100/(1+(gains/n)/(losses/n));
-}
-
-function buildSignals(data,start,end){
- const signals={A:[],B:[],C:[],D:[]};
-
- // Индикаторы могут использовать историю до начала участка.
- // Но новые сигналы и все будущие бары для ретеста ограничены участком.
- for(let i=Math.max(101,start);i<Math.min(end,data.length-1);i++){
-  const c=data[i];
-  const s20=sma(data,i,20);
-  const s50=sma(data,i,50);
-  const s100=sma(data,i,100);
-
-  if(s50>s100&&c.close>s100&&c.low<=s20&&c.close>s20){
-   signals.A.push({
-    i,stop:c.low,mode:"target",name:"A · Откат в тренде"
-   });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test($("fromDate").value)) {
+    throw new Error("Укажи корректную дату начала.");
   }
 
-  if(rsi(data,i,2)<=10&&c.close>s100){
-   signals.B.push({
-    i,stop:c.low,mode:"sma5",name:"B · Перепроданность"
-   });
-  }
-
-  const level=highest(data,i,20);
-  if(c.close>level){
-   // Ретест и вход должны целиком помещаться в тот же участок.
-   for(let k=i+1;k<=Math.min(end-2,i+5);k++){
-    if(data[k].low<=level&&data[k].close>=level){
-     signals.C.push({
-      i:k,stop:data[k].low,mode:"target",
-      name:"C · Пробой/ретест"
-     });
-     break;
+  const positive = ["capital", "risk", "tick", "atrMult", "maxHold"];
+  for (const id of positive) {
+    if (!Number.isFinite(num(id)) || num(id) <= 0) {
+      throw new Error("Параметр «" + id + "» должен быть больше нуля.");
     }
-   }
   }
 
-  if(atr(data,i,14)<atr(data,i,50)&&c.close>level){
-   signals.D.push({
-    i,stop:c.low,mode:"target",name:"D · Сжатие + пробой"
-   });
-  }
- }
-
- for(const key of Object.keys(signals)){
-  const seen=new Set();
-  signals[key]=signals[key].filter(x=>{
-   if(seen.has(x.i))return false;
-   seen.add(x.i);
-   return true;
-  }).sort((a,b)=>a.i-b.i);
- }
- return signals;
-}
-
-function settings(){
- const val=(id,d)=>Number.isFinite(Number($(id).value))
-  ?Number($(id).value):d;
-
- return {
-  capital:Math.max(0,val("capital",1000)),
-  risk:Math.max(0,val("riskBudget",20)),
-  fee:Math.max(0,val("fee",.05))/100,
-  slip:Math.max(0,val("slippage",.05)),
-  // Полный bid-ask spread. Половина на вход и половина на выход.
-  spread:Math.max(0,val("spread",0)),
-  tick:Math.max(.001,val("tick",.01)),
-  maxHold:Math.max(1,Math.floor(val("maxHold",20))),
-  trainPct:Math.min(85,Math.max(60,val("trainPct",70)))/100,
-  stopDD:100
- };
-}
-
-function simulate(signals,s,start,end,segment){
- let equity=s.capital;
- let peak=equity,maxDD=0,nextAvailable=start;
- const trades=[];
- let skipped=0,stopped=false;
-
- for(const sig of signals){
-  if(stopped)break;
-
-  const entryIndex=sig.i+1;
-  if(sig.i<start||sig.i>=end||entryIndex>=end)continue;
-
-  if(entryIndex<nextAvailable){
-   skipped++;
-   continue;
-  }
-
-  const entryRaw=candles[entryIndex].open;
-  const entry=entryRaw+s.slip+s.spread/2;
-  const stop=sig.stop-s.tick;
-
-  if(!(entry>stop&&stop>0)){
-   skipped++;
-   continue;
-  }
-
-  // Оценка убытка на акцию при стопе, включая обе стороны
-  // комиссии, проскальзывания и половины спреда.
-  const stopFill=Math.max(0,stop-s.slip-s.spread/2);
-  const riskShare=(entry-stopFill)+s.fee*(entry+stopFill);
-
-  if(!(riskShare>0)&&Number.isFinite(riskShare)){
-   skipped++;
-   continue;
-  }
-  if(!Number.isFinite(riskShare)||riskShare<=0){
-   skipped++;
-   continue;
-  }
-
-  // Максимальный размер по риску и доступному денежному капиталу.
-  const byRisk=Math.floor(s.risk/riskShare);
-  const cashPerShare=entry*(1+s.fee);
-  const byCash=Math.floor(equity/cashPerShare);
-  const qty=Math.min(byRisk,byCash);
-
-  if(qty<1){
-   skipped++;
-   continue;
-  }
-
-  const target=entry+1.5*(entry-stop);
-  const last=Math.min(end-1,entryIndex+s.maxHold-1);
-  let exitIndex=last;
-  let exitRaw=candles[last].close;
-  let reason=last===candles.length-1
-   ?"Конец данных":"Макс. срок";
-
-  for(let k=entryIndex;k<=last;k++){
-   const c=candles[k];
-
-   // Если открытие уже за стопом, моделируем исполнение по открытию.
-   if(c.open<=stop){
-    exitIndex=k;
-    exitRaw=c.open;
-    reason="Стоп / гэп";
-    break;
-   }
-
-   // Если открытие выше цели, исполнение по открытию.
-   if(sig.mode==="target"&&c.open>=target){
-    exitIndex=k;
-    exitRaw=c.open;
-    reason="Цель / гэп";
-    break;
-   }
-
-   const stopHit=c.low<=stop;
-   const targetHit=sig.mode==="target"&&c.high>=target;
-
-   if(stopHit){
-    exitIndex=k;
-    exitRaw=stop;
-    reason=targetHit?"Стоп: оба уровня в свече":"Стоп";
-    break;
-   }
-
-   if(targetHit){
-    exitIndex=k;
-    exitRaw=target;
-    reason="Цель";
-    break;
-   }
-
-   if(sig.mode==="sma5"&&c.close>sma(candles,k,5)){
-    if(k+1<end){
-     exitIndex=k+1;
-     exitRaw=candles[k+1].open;
-     reason="Выход по SMA5";
-    }else{
-     exitIndex=k;
-     exitRaw=c.close;
-     reason="SMA5: конец участка";
+  const nonnegative = ["fee", "slippage", "spread", "maxDD"];
+  for (const id of nonnegative) {
+    if (!Number.isFinite(num(id)) || num(id) < 0) {
+      throw new Error("Параметр «" + id + "» не может быть отрицательным.");
     }
-    break;
-   }
   }
 
-  // Исполнение: спред и проскальзывание уже включены в цены.
-  // Поэтому отдельно повторно стоимость спреда НЕ вычитаем.
-  const exit=Math.max(0,exitRaw-s.slip-s.spread/2);
-  const commission=qty*(entry+exit)*s.fee;
-  const pnl=qty*(exit-entry)-commission;
+  if (num("fee") > 10) {
+    throw new Error("Комиссия указана в процентах. Проверь её значение.");
+  }
 
-  equity+=pnl;
-  peak=Math.max(peak,equity);
-  maxDD=Math.max(maxDD,peak-equity);
+  return ticker;
+}
 
-  trades.push({
-   name:sig.name,segment,
-   entryDate:candles[entryIndex].date,
-   exitDate:candles[exitIndex].date,
-   entry,exit,qty,pnl,reason,
-   equityAfter:equity
+async function fetchCandlesPage(ticker, from, start, limit) {
+  const url = new URL(
+    "https://iss.moex.com/iss/engines/stock/markets/shares/securities/" +
+    encodeURIComponent(ticker) + "/candles.json"
+  );
+
+  url.searchParams.set("from", from);
+  url.searchParams.set("interval", "24");
+  url.searchParams.set("iss.meta", "off");
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("start", String(start));
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    cache: "no-store"
   });
 
-  nextAvailable=exitIndex+1;
-
-  // Остановка при падении на 100 ₽ от пика капитала.
-  if(peak-equity>=s.stopDD){
-   stopped=true;
+  if (!response.ok) {
+    throw new Error("MOEX ISS вернул HTTP " + response.status);
   }
- }
 
- const wins=trades.filter(t=>t.pnl>0);
- const losses=trades.filter(t=>t.pnl<0);
- const grossWin=wins.reduce((a,t)=>a+t.pnl,0);
- const grossLoss=-losses.reduce((a,t)=>a+t.pnl,0);
- const net=trades.reduce((a,t)=>a+t.pnl,0);
+  const json = await response.json();
+  const columns = json?.candles?.columns;
+  const rows = json?.candles?.data;
 
- return {
-  trades,skipped,net,
-  winRate:trades.length?wins.length/trades.length*100:0,
-  avg:trades.length?net/trades.length:0,
-  avgWin:wins.length?grossWin/wins.length:0,
-  avgLoss:losses.length?-grossLoss/losses.length:0,
-  pf:grossLoss?grossWin/grossLoss:(grossWin?Infinity:0),
-  maxDD,ending:s.capital+net,
-  stopped,peak
- };
+  if (!Array.isArray(columns) || !Array.isArray(rows)) {
+    throw new Error("Неожиданный формат ответа MOEX ISS.");
+  }
+
+  const idx = {};
+  columns.forEach((name, i) => { idx[name] = i; });
+
+  for (const key of ["begin", "open", "high", "low", "close"]) {
+    if (idx[key] === undefined) {
+      throw new Error("В ответе MOEX отсутствует поле " + key);
+    }
+  }
+
+  return rows.map(row => ({
+    date: String(row[idx.begin]).slice(0, 10),
+    open: Number(row[idx.open]),
+    high: Number(row[idx.high]),
+    low: Number(row[idx.low]),
+    close: Number(row[idx.close]),
+    volume: idx.volume === undefined ? 0 : Number(row[idx.volume] || 0)
+  })).filter(c =>
+    c.date &&
+    [c.open, c.high, c.low, c.close].every(Number.isFinite) &&
+    c.open > 0 && c.high > 0 && c.low > 0 && c.close > 0 &&
+    c.high >= c.low
+  );
 }
 
-function row(name,segment,r){
- const pf=Number.isFinite(r.pf)?fmt(r.pf):
-  (r.pf===Infinity?"∞":"—");
- const state=r.stopped
-  ?"Остановлено: просадка"
-  :(r.trades.length?"Завершено":"Нет сделок");
+async function loadAllCandles(ticker, from, maxBars) {
+  const pageSize = 100;
+  const maxPages = 100;
+  const byDate = new Map();
+  let start = 0;
+  let pages = 0;
 
- return `<tr>
- <td>${esc(name)}</td>
- <td>${esc(segment)}</td>
- <td>${r.trades.length}</td>
- <td>${fmt(r.winRate)}%</td>
- <td class="${r.net>=0?"good":"bad"}">${fmt(r.net)}</td>
- <td>${fmt(r.avg)}</td>
- <td>${fmt(r.avgWin)}</td>
- <td>${fmt(r.avgLoss)}</td>
- <td>${pf}</td>
- <td>${fmt(r.maxDD)}</td>
- <td>${fmt(r.ending)}</td>
- <td>${r.skipped}</td>
- <td>${state}</td>
- </tr>`;
+  while (pages < maxPages && byDate.size < maxBars) {
+    setStatus(
+      "Загрузка свечей " + ticker +
+      "\nПолучено уникальных свечей: " + byDate.size +
+      "\nЗапрос страниц MOEX ISS: " + (pages + 1)
+    );
+
+    const page = await fetchCandlesPage(ticker, from, start, pageSize);
+    pages++;
+
+    if (page.length === 0) break;
+
+    for (const candle of page) {
+      byDate.set(candle.date, candle);
+    }
+
+    start += page.length;
+
+    if (page.length < pageSize) break;
+  }
+
+  return [...byDate.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-maxBars);
 }
 
-function runTest(){
- if(candles.length<130){
-  status("Сначала загрузи не менее 130 свечей.",true);
-  return;
- }
+/*
+ * ATR по Уайлдеру.
+ * TR[0] = High - Low.
+ * Первое значение ATR — среднее TR за первые period свечей.
+ * Далее применяется рекурсия Wilder: (prevATR*(period-1)+TR)/period.
+ */
+function calculateATR(data, period = 20) {
+  const tr = new Array(data.length).fill(null);
+  const atr = new Array(data.length).fill(null);
 
- const s=settings();
- const split=Math.floor(candles.length*s.trainPct);
- const names={
-  A:"A · Откат в тренде",
-  B:"B · Перепроданность",
-  C:"C · Пробой/ретест",
-  D:"D · Сжатие + пробой"
- };
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) {
+      tr[i] = data[i].high - data[i].low;
+    } else {
+      tr[i] = Math.max(
+        data[i].high - data[i].low,
+        Math.abs(data[i].high - data[i - 1].close),
+        Math.abs(data[i].low - data[i - 1].close)
+      );
+    }
+  }
 
- const rows=[],trades=[],notes=[];
+  if (data.length < period) return atr;
 
- for(const key of ["A","B","C","D"]){
-  // Строим сигналы независимо для каждого временного участка.
-  const trainSignals=buildSignals(candles,0,split);
-  const testSignals=buildSignals(candles,split,candles.length);
+  let sum = 0;
+  for (let i = 0; i < period; i++) sum += tr[i];
+  atr[period - 1] = sum / period;
 
-  const train=simulate(
-   trainSignals[key],s,0,split,"Разработка"
-  );
-  const test=simulate(
-   testSignals[key],s,split,candles.length,"Вне выборки"
-  );
+  for (let i = period; i < data.length; i++) {
+    atr[i] = (atr[i - 1] * (period - 1) + tr[i]) / period;
+  }
 
-  rows.push(row(names[key],"Разработка",train));
-  rows.push(row(names[key],"Вне выборки",test));
-
-  trades.push(...train.trades,...test.trades);
-
-  notes.push(
-   `${key}: сигналы — разработка ${trainSignals[key].length}, `+
-   `вне выборки ${testSignals[key].length}; `+
-   `P/L — ${fmt(train.net)} ₽ / ${fmt(test.net)} ₽`
-  );
- }
-
- $("results").innerHTML=rows.join("");
-
- // Полный журнал. Ничего не обрезаем до 150 сделок.
- trades.sort((a,b)=>
-  b.entryDate.localeCompare(a.entryDate)||
-  a.name.localeCompare(b.name)
- );
-
- $("tradeLog").innerHTML=trades.map(t=>
-  `<tr>
-   <td>${esc(t.name)}</td>
-   <td>${esc(t.segment)}</td>
-   <td>${t.entryDate}</td>
-   <td>${t.exitDate}</td>
-   <td>${fmt(t.entry)}</td>
-   <td>${t.qty}</td>
-   <td>${fmt(t.exit)}</td>
-   <td class="${t.pnl>=0?"good":"bad"}">${fmt(t.pnl)}</td>
-   <td>${esc(t.reason)}</td>
-  </tr>`
- ).join("")||'<tr><td colspan="9">Нет сделок.</td></tr>';
-
- $("summary").textContent=
-  `Граница участков: ${candles[split]?.date||"—"}. `+
-  `Разработка: ${candles[0].date} — ${candles[split-1].date}. `+
-  `Вне выборки: ${candles[split].date} — ${candles.at(-1).date}. `+
-  notes.join(" | ")+
-  ". Каждый участок начинает тест с заданного стартового капитала. "+
-  "Результаты разработки и вне выборки не объединяются.";
-
- $("logSummary").textContent=
-  `Всего отображено закрытых сделок: ${trades.length}. `+
-  "Стратегии тестируются независимо; совпадающие сделки разных стратегий "+
-  "не означают, что их можно одновременно открыть на один капитал.";
-
- status("Тест завершён. Сначала оцени вневыборочные результаты, "+
-  "количество сделок и издержки.");
+  return atr;
 }
 
-$("loadBtn").addEventListener("click",loadData);
-$("testBtn").addEventListener("click",runTest);
+function highest(data, endExclusive, period, field) {
+  const start = endExclusive - period;
+  if (start < 0) return null;
+
+  let value = -Infinity;
+  for (let i = start; i < endExclusive; i++) {
+    value = Math.max(value, data[i][field]);
+  }
+  return value;
+}
+
+function lowest(data, endExclusive, period, field) {
+  const start = endExclusive - period;
+  if (start < 0) return null;
+
+  let value = Infinity;
+  for (let i = start; i < endExclusive; i++) {
+    value = Math.min(value, data[i][field]);
+  }
+  return value;
+}
+
+function floorToTick(price, tick) {
+  const decimals = Math.max(0, (String(tick).split(".")[1] || "").length);
+  const value = Math.floor((price + tick * 1e-8) / tick) * tick;
+  return Number(value.toFixed(Math.min(8, decimals + 2)));
+}
+
+function ceilToTick(price, tick) {
+  const decimals = Math.max(0, (String(tick).split(".")[1] || "").length);
+  const value = Math.ceil((price - tick * 1e-8) / tick) * tick;
+  return Number(value.toFixed(Math.min(8, decimals + 2)));
+}
+
+function getSettings() {
+  return {
+    capital: num("capital"),
+    risk: num("risk"),
+    feeRate: num("fee") / 100,
+    slippage: num("slippage"),
+    spread: num("spread"),
+    tick: num("tick"),
+    atrMult: num("atrMult"),
+    maxHold: Math.floor(num("maxHold")),
+    maxDD: num("maxDD")
+  };
+}
+
+function buildIndicators(data) {
+  const atr = calculateATR(data, 20);
+  const breakout20 = new Array(data.length).fill(null);
+  const exitLow10 = new Array(data.length).fill(null);
+
+  for (let i = 20; i < data.length; i++) {
+    breakout20[i] = highest(data, i, 20, "high");
+  }
+
+  for (let i = 10; i < data.length; i++) {
+    exitLow10[i] = lowest(data, i, 10, "low");
+  }
+
+  return { atr, breakout20, exitLow10 };
+}
+
+function makeSegments(data) {
+  const split = Math.floor(data.length * 0.70);
+  return [
+    { name: "Разработка", start: 0, end: split },
+    { name: "Вне выборки", start: split, end: data.length }
+  ];
+}
+
+function getSignalDiagnostics(data, indicators, segment) {
+  let breakouts = 0;
+  let usableSignals = 0;
+  let noAtr = 0;
+  let noNextBar = 0;
+
+  const start = Math.max(segment.start, 20);
+  const end = segment.end;
+
+  for (let i = start; i < end; i++) {
+    if (indicators.breakout20[i] === null) continue;
+
+    const isBreakout = data[i].close > indicators.breakout20[i];
+    if (!isBreakout) continue;
+
+    breakouts++;
+
+    if (!Number.isFinite(indicators.atr[i]) || indicators.atr[i] <= 0) {
+      noAtr++;
+      continue;
+    }
+
+    if (i + 1 >= end) {
+      noNextBar++;
+      continue;
+    }
+
+    usableSignals++;
+  }
+
+  return { breakouts, usableSignals, noAtr, noNextBar };
+}
+
+function simulateSegment(data, indicators, segment, settings) {
+  let cash = settings.capital;
+  let peakEquity = settings.capital;
+  let maxDD = 0;
+  let stoppedByDD = false;
+  let position = null;
+
+  let signalCount = 0;
+  let usableSignals = 0;
+  let executed = 0;
+  let skippedPosition = 0;
+  let skippedNoCapital = 0;
+  let skippedInvalidStop = 0;
+  let skippedNoATR = 0;
+  let skippedNoNextBar = 0;
+
+  const localTrades = [];
+  const localSkipped = [];
+  const equityCurve = [];
+
+  function markEquity(close) {
+    const equity = cash + (position ? position.qty * close : 0);
+    peakEquity = Math.max(peakEquity, equity);
+    maxDD = Math.max(maxDD, peakEquity - equity);
+    equityCurve.push({ date: currentDate, equity });
+    return equity;
+  }
+
+  function closePosition(rawPrice, date, reason, index) {
+    if (!position) return;
+
+    const exitPrice = rawPrice - settings.slippage - settings.spread / 2;
+    const gross = position.qty * (exitPrice - position.entryFill);
+    const exitFee = position.qty * exitPrice * settings.feeRate;
+    const net = gross - position.entryFee - exitFee;
+
+    cash += position.qty * exitPrice - exitFee;
+
+    localTrades.push({
+      ticker: $("ticker").value.trim().toUpperCase(),
+      segment: segment.name,
+      signalDate: position.signalDate,
+      entryDate: position.entryDate,
+      exitDate: date,
+      entryIndex: position.entryIndex,
+      exitIndex: index,
+      qty: position.qty,
+      entryFill: position.entryFill,
+      exitFill: exitPrice,
+      rawEntry: position.rawEntry,
+      rawExit: rawPrice,
+      initialStop: position.stop,
+      initialATR: position.atr,
+      entryFee: position.entryFee,
+      exitFee,
+      net,
+      reason,
+      equityAfter: cash
+    });
+
+    position = null;
+  }
+
+  let currentDate = data[segment.start]?.date || "";
+
+  for (let i = segment.start; i < segment.end; i++) {
+    const bar = data[i];
+    currentDate = bar.date;
+
+    // На открытии сначала исполняются выходы, сформированные прошлой свечой.
+    if (position && position.pendingExit && position.exitAtIndex === i) {
+      closePosition(bar.open, bar.date, position.pendingExit, i);
+    }
+
+    // Стоп проверяется до сигнала канального выхода.
+    // При гэпе ниже стопа исполняем по открытию, а не по стоп-цене.
+    if (position) {
+      if (bar.open <= position.stop) {
+        closePosition(bar.open, bar.date, "Стоп: гэп ниже уровня", i);
+      } else if (bar.low <= position.stop) {
+        closePosition(position.stop, bar.date, "Стоп", i);
+      }
+    }
+
+    // Сигнал на выход формируется по закрытию текущей свечи,
+    // исполнение — на следующем открытии.
+    if (position && !position.pendingExit) {
+      const channel = indicators.exitLow10[i];
+
+      if (channel !== null && bar.close < channel) {
+        if (i + 1 < segment.end) {
+          position.pendingExit = "Канал выхода 10";
+          position.exitAtIndex = i + 1;
+        } else {
+          closePosition(bar.close, bar.date, "Канал выхода 10: конец сегмента", i);
+        }
+      } else if (i - position.entryIndex + 1 >= settings.maxHold) {
+        closePosition(bar.close, bar.date, "Максимальный срок удержания", i);
+      } else if (i === segment.end - 1) {
+        closePosition(bar.close, bar.date, "Конец сегмента", i);
+      }
+    }
+
+    // Если позиция открыта и ожидает выхода на следующем открытии,
+    // новые входы не разрешены.
+    const breakoutLevel = indicators.breakout20[i];
+    const hasBreakout = breakoutLevel !== null && bar.close > breakoutLevel;
+
+    if (hasBreakout) {
+      signalCount++;
+
+      if (!Number.isFinite(indicators.atr[i]) || indicators.atr[i] <= 0) {
+        skippedNoATR++;
+        localSkipped.push({
+          date: bar.date, segment: segment.name, reason: "Нет корректного ATR(20)",
+          close: bar.close, atr: indicators.atr[i]
+        });
+      } else if (i + 1 >= segment.end) {
+        skippedNoNextBar++;
+        localSkipped.push({
+          date: bar.date, segment: segment.name, reason: "Нет следующей свечи внутри сегмента",
+          close: bar.close, atr: indicators.atr[i]
+        });
+      } else {
+        usableSignals++;
+
+        if (position) {
+          skippedPosition++;
+          localSkipped.push({
+            date: bar.date, segment: segment.name, reason: "Позиция уже открыта или ожидает выхода",
+            close: bar.close, atr: indicators.atr[i]
+          });
+        } else {
+          const nextBar = data[i + 1];
+          const atrValue = indicators.atr[i];
+
+          // Исполнение покупки: открытие + проскальзывание + половина спреда.
+          const entryFill = nextBar.open + settings.slippage + settings.spread / 2;
+          const rawStop = entryFill - settings.atrMult * atrValue;
+          const stop = floorToTick(rawStop, settings.tick);
+
+          if (!Number.isFinite(stop) || stop <= 0 || stop >= entryFill) {
+            skippedInvalidStop++;
+            localSkipped.push({
+              date: bar.date, segment: segment.name, reason: "Некорректный уровень стопа",
+              close: bar.close, atr: atrValue
+            });
+          } else {
+            const stopFill = stop - settings.slippage - settings.spread / 2;
+            const estimatedRiskPerShare =
+              (entryFill - stopFill) +
+              settings.feeRate * (entryFill + Math.max(0, stopFill));
+
+            const affordableQty = Math.floor(
+              cash / (entryFill * (1 + settings.feeRate))
+            );
+
+            const riskQty = estimatedRiskPerShare > 0
+              ? Math.floor(settings.risk / estimatedRiskPerShare)
+              : 0;
+
+            const qty = Math.max(0, Math.min(affordableQty, riskQty));
+
+            if (qty < 1) {
+              skippedNoCapital++;
+              localSkipped.push({
+                date: bar.date, segment: segment.name,
+                reason: affordableQty < 1
+                  ? "Недостаточно капитала для одной акции"
+                  : "Риск-бюджет меньше модельного риска одной акции",
+                close: bar.close, atr: atrValue
+              });
+            } else {
+              const entryFee = qty * entryFill * settings.feeRate;
+              const totalCost = qty * entryFill + entryFee;
+
+              if (totalCost > cash + 1e-8) {
+                skippedNoCapital++;
+                localSkipped.push({
+                  date: bar.date, segment: segment.name,
+                  reason: "Недостаточно капитала с учётом комиссии",
+                  close: bar.close, atr: atrValue
+                });
+              } else {
+                cash -= totalCost;
+
+                position = {
+                  signalDate: bar.date,
+                  entryDate: nextBar.date,
+                  entryIndex: i + 1,
+                  qty,
+                  rawEntry: nextBar.open,
+                  entryFill,
+                  entryFee,
+                  stop,
+                  atr: atrValue,
+                  pendingExit: null,
+                  exitAtIndex: null
+                };
+
+                executed++;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const equity = cash + (position ? position.qty * bar.close : 0);
+    peakEquity = Math.max(peakEquity, equity);
+    maxDD = Math.max(maxDD, peakEquity - equity);
+    equityCurve.push({ date: bar.date, equity });
+
+    if (
+      !stoppedByDD &&
+      settings.maxDD > 0 &&
+      peakEquity - equity >= settings.maxDD
+    ) {
+      stoppedByDD = true;
+
+      if (position) {
+        closePosition(bar.close, bar.date, "Аварийная остановка по просадке", i);
+      }
+
+      // Важно: остановка относится только к текущему сегменту.
+      break;
+    }
+  }
+
+  // Если цикл завершился с открытой позицией, закрываем её по последнему доступному close.
+  if (position) {
+    const lastIndex = Math.min(segment.end - 1, data.length - 1);
+    if (lastIndex >= segment.start) {
+      closePosition(
+        data[lastIndex].close,
+        data[lastIndex].date,
+        "Принудительное закрытие в конце теста",
+        lastIndex
+      );
+    }
+  }
+
+  const totalNet = localTrades.reduce((sum, t) => sum + t.net, 0);
+  const wins = localTrades.filter(t => t.net > 0);
+  const losses = localTrades.filter(t => t.net < 0);
+  const grossProfit = wins.reduce((sum, t) => sum + t.net, 0);
+  const grossLoss = Math.abs(losses.reduce((sum, t) => sum + t.net, 0));
+  const winRate = localTrades.length ? wins.length / localTrades.length * 100 : 0;
+  const avgWin = wins.length ? grossProfit / wins.length : 0;
+  const avgLoss = losses.length ? grossLoss / losses.length : 0;
+  const expectancy = localTrades.length ? totalNet / localTrades.length : 0;
+  const profitFactor = grossLoss > 0
+    ? grossProfit / grossLoss
+    : (grossProfit > 0 ? Infinity : 0);
+
+  const finalEquity = cash;
+  const returnPct = settings.capital > 0
+    ? (finalEquity / settings.capital - 1) * 100
+    : 0;
+
+  return {
+    segment: segment.name,
+    initialCapital: settings.capital,
+    finalEquity,
+    net: totalNet,
+    returnPct,
+    trades: localTrades,
+    skipped: localSkipped,
+    tradeCount: localTrades.length,
+    wins: wins.length,
+    losses: losses.length,
+    winRate,
+    grossProfit,
+    grossLoss,
+    profitFactor,
+    avgWin,
+    avgLoss,
+    expectancy,
+    maxDD,
+    signalCount,
+    usableSignals,
+    executed,
+    skippedPosition,
+    skippedNoCapital,
+    skippedInvalidStop,
+    skippedNoATR,
+    skippedNoNextBar,
+    stoppedByDD,
+    equityCurve
+  };
+}
+
+function renderResults(results) {
+  const [dev, oos] = results;
+
+  function row(label, a, b, type = "number") {
+    const render = v => {
+      if (type === "money") return money(v);
+      if (type === "pct") return pct(v);
+      if (type === "pf") return v === Infinity ? "∞" : fmt(v, 2);
+      if (type === "integer") return String(v);
+      return fmt(v, 2);
+    };
+    return `<tr><td>${escapeHTML(label)}</td><td>${render(a)}</td><td>${render(b)}</td></tr>`;
+  }
+
+  $("results").querySelector("tbody").innerHTML = [
+    row("Начальный капитал", dev.initialCapital, oos.initialCapital, "money"),
+    row("Конечный капитал", dev.finalEquity, oos.finalEquity, "money"),
+    row("Чистый результат", dev.net, oos.net, "money"),
+    row("Доходность", dev.returnPct, oos.returnPct, "pct"),
+    row("Закрытые сделки", dev.tradeCount, oos.tradeCount, "integer"),
+    row("Прибыльные сделки", dev.wins, oos.wins, "integer"),
+    row("Убыточные сделки", dev.losses, oos.losses, "integer"),
+    row("Доля прибыльных", dev.winRate, oos.winRate, "pct"),
+    row("Средняя прибыльная сделка", dev.avgWin, oos.avgWin, "money"),
+    row("Средняя убыточная сделка", dev.avgLoss, oos.avgLoss, "money"),
+    row("Математическое ожидание на сделку", dev.expectancy, oos.expectancy, "money"),
+    row("Profit factor", dev.profitFactor, oos.profitFactor, "pf"),
+    row("Максимальная просадка от пика", dev.maxDD, oos.maxDD, "money"),
+    row("Остановка по лимиту просадки", dev.stoppedByDD ? "Да" : "Нет", oos.stoppedByDD ? "Да" : "Нет", "text")
+  ].map(html => html.replace(
+    /<td>(Да|Нет)<\/td>/g,
+    '<td>$1</td>'
+  )).join("");
+
+  $("diagnostics").querySelector("tbody").innerHTML = [
+    row("Обнаружено пробоев 20-дневного максимума", dev.signalCount, oos.signalCount, "integer"),
+    row("Сигналы с ATR и следующей свечой", dev.usableSignals, oos.usableSignals, "integer"),
+    row("Фактически открыто сделок", dev.executed, oos.executed, "integer"),
+    row("Пропущено: позиция уже открыта", dev.skippedPosition, oos.skippedPosition, "integer"),
+    row("Пропущено: капитал или риск-бюджет", dev.skippedNoCapital, oos.skippedNoCapital, "integer"),
+    row("Пропущено: некорректный стоп", dev.skippedInvalidStop, oos.skippedInvalidStop, "integer"),
+    row("Пропущено: отсутствует ATR", dev.skippedNoATR, oos.skippedNoATR, "integer"),
+    row("Пропущено: нет следующей свечи", dev.skippedNoNextBar, oos.skippedNoNextBar, "integer")
+  ].join("");
+
+  const allTrades = [...dev.trades, ...oos.trades];
+  trades = allTrades;
+  skippedSignals = [...dev.skipped, ...oos.skipped];
+
+  $("journal").querySelector("tbody").innerHTML = allTrades.length
+    ? allTrades.map((t, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${escapeHTML(t.segment)}</td>
+        <td>${escapeHTML(t.entryDate)}</td>
+        <td>${escapeHTML(t.exitDate)}</td>
+        <td>${t.qty}</td>
+        <td>${fmt(t.entryFill, 3)}</td>
+        <td>${fmt(t.exitFill, 3)}</td>
+        <td>${fmt(t.initialStop, 3)}</td>
+        <td class="${t.net >= 0 ? "good" : "bad"}">${money(t.net)}</td>
+        <td>${escapeHTML(t.reason)}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="10">Закрытых сделок нет. Проверь диагностику сигналов.</td></tr>`;
+
+  $("skipped").querySelector("tbody").innerHTML = skippedSignals.length
+    ? skippedSignals.map(s => `
+      <tr>
+        <td>${escapeHTML(s.date)}</td>
+        <td>${escapeHTML(s.segment)}</td>
+        <td>${escapeHTML(s.reason)}</td>
+        <td>${fmt(s.close, 3)}</td>
+        <td>${fmt(s.atr, 3)}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="5">Пропущенных сигналов нет.</td></tr>`;
+
+  const netAll = dev.net + oos.net;
+  $("summary").innerHTML = `
+    <div class="metrics">
+      <div class="metric">
+        <div class="name">Разработка: результат</div>
+        <div class="value ${dev.net >= 0 ? "good" : "bad"}">${money(dev.net)}</div>
+      </div>
+      <div class="metric">
+        <div class="name">Вне выборки: результат</div>
+        <div class="value ${oos.net >= 0 ? "good" : "bad"}">${money(oos.net)}</div>
+      </div>
+      <div class="metric">
+        <div class="name">Всего закрытых сделок</div>
+        <div class="value">${dev.tradeCount + oos.tradeCount}</div>
+      </div>
+      <div class="metric">
+        <div class="name">Сумма результатов двух тестов*</div>
+        <div class="value ${netAll >= 0 ? "good" : "bad"}">${money(netAll)}</div>
+      </div>
+    </div>
+    <p class="small muted">
+      *Это сумма двух независимых тестов с отдельным стартовым капиталом,
+      а не доходность единого непрерывного счёта.
+    </p>
+  `;
+
+  $("candles").querySelector("tbody").innerHTML = candles.slice(-100).reverse().map(c => `
+    <tr>
+      <td>${escapeHTML(c.date)}</td>
+      <td>${fmt(c.open, 3)}</td>
+      <td>${fmt(c.high, 3)}</td>
+      <td>${fmt(c.low, 3)}</td>
+      <td>${fmt(c.close, 3)}</td>
+      <td>${fmt(c.volume, 0)}</td>
+      <td>${fmt(c.atr, 3)}</td>
+    </tr>
+  `).join("");
+}
+
+async function loadData() {
+  const button = $("loadBtn");
+  button.disabled = true;
+
+  try {
+    const ticker = validateSettings();
+    const from = $("fromDate").value;
+    const maxBars = Number($("bars").value);
+
+    setStatus("Подключение к MOEX ISS API…");
+
+    const loaded = await loadAllCandles(ticker, from, maxBars);
+
+    if (loaded.length < 100) {
+      throw new Error(
+        "Получено только " + loaded.length +
+        " свечей. Для этого теста нужно не менее 100. Проверь тикер, дату и доступность MOEX ISS."
+      );
+    }
+
+    candles = loaded;
+    const indicators = buildIndicators(candles);
+
+    candles = candles.map((c, i) => ({
+      ...c,
+      atr: indicators.atr[i]
+    }));
+
+    const segments = makeSegments(candles);
+    const settings = getSettings();
+
+    if (segments.some(s => s.end - s.start < 30)) {
+      throw new Error("Недостаточно свечей в одном из тестовых сегментов.");
+    }
+
+    setStatus(
+      "Данные загружены: " + candles.length + " дневных свечей.\n" +
+      "Первая дата: " + candles[0].date + "\n" +
+      "Последняя дата: " + candles[candles.length - 1].date + "\n" +
+      "Расчёт индикаторов и симуляция…"
+    );
+
+    const results = segments.map(segment =>
+      simulateSegment(candles, indicators, segment, settings)
+    );
+
+    testResults = results;
+    renderResults(results);
+
+    setStatus(
+      "Тест завершён.\n" +
+      "Инструмент: " + ticker + "\n" +
+      "Свечей: " + candles.length + "\n" +
+      "Период: " + candles[0].date + " — " + candles[candles.length - 1].date + "\n" +
+      "Разработка: " + results[0].tradeCount + " закрытых сделок.\n" +
+      "Вне выборки: " + results[1].tradeCount + " закрытых сделок.\n\n" +
+      "Это результат исторической симуляции, а не доказательство будущего преимущества."
+    );
+  } catch (error) {
+    console.error(error);
+    setStatus(
+      "Ошибка: " + (error?.message || String(error)) +
+      "\n\nЕсли не удалось получить данные, проверь соединение, тикер и доступ к MOEX ISS API."
+    );
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function downloadCSV() {
+  if (!trades.length) {
+    setStatus("Сначала выполни тест, чтобы сформировать журнал сделок.");
+    return;
+  }
+
+  const headers = [
+    "ticker", "segment", "signal_date", "entry_date", "exit_date",
+    "quantity", "raw_entry", "entry_fill", "initial_stop",
+    "raw_exit", "exit_fill", "initial_atr", "entry_fee", "exit_fee",
+    "net_result", "exit_reason", "equity_after"
+  ];
+
+  const rows = trades.map(t => [
+    t.ticker, t.segment, t.signalDate, t.entryDate, t.exitDate,
+    t.qty, t.rawEntry, t.entryFill, t.initialStop, t.rawExit,
+    t.exitFill, t.initialATR, t.entryFee, t.exitFee, t.net,
+    t.reason, t.equityAfter
+  ]);
+
+  const csvCell = value => {
+    const str = String(value ?? "");
+    return '"' + str.replace(/"/g, '""') + '"';
+  };
+
+  const csv = "\uFEFF" + [headers, ...rows]
+    .map(row => row.map(csvCell).join(";"))
+    .join("\r\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "moex_trade_lab_turtle_journal.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 </script>
 </body>
 </html>
