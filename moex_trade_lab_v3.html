@@ -1,0 +1,199 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101820">
+<title>MOEX Trade Lab v3</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101820;color:#edf2f7;font:15px Arial,sans-serif}
+main{max-width:900px;margin:auto;padding:16px}
+h1{font-size:24px;margin:8px 0}
+p{line-height:1.5;color:#b8c4d1}
+.panel{background:#1a2734;border:1px solid #334454;border-radius:12px;padding:14px;margin:12px 0}
+input,select,button{font:inherit;padding:11px;border-radius:8px;border:1px solid #526477}
+input,select{background:#101820;color:white;min-width:0}
+button{background:#65b5e8;color:#081723;border:0;font-weight:bold}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.controls input{width:105px}
+#chart{display:block;width:100%;height:300px}
+.small{font-size:13px;color:#b8c4d1}
+.stat{font-size:22px;font-weight:bold;margin-top:6px}
+.good{color:#70dfa4}.warn{color:#ffca78}.bad{color:#ff8585}
+.signal{padding:10px 0;border-bottom:1px solid #334454}
+a{color:#8bcfff}
+</style>
+</head>
+<body>
+<main>
+<h1>MOEX Trade Lab</h1>
+<p>Версия 3 · Дневные свечи · Только бумажная торговля</p>
+
+<div class="panel">
+<div class="controls">
+<input id="ticker" value="SBER" maxlength="12" aria-label="Тикер">
+<select id="period" aria-label="Период">
+<option value="120">Последние 120 свечей</option>
+<option value="250">Последние 250 свечей</option>
+<option value="500">Последние 500 свечей</option>
+</select>
+<button id="load">Загрузить MOEX</button>
+</div>
+<p class="small">Источник: MOEX ISS. Дневные свечи могут публиковаться с задержкой.</p>
+<div id="status">Нажми «Загрузить MOEX».</div>
+</div>
+
+<div class="panel">
+<strong>Дневной график</strong>
+<canvas id="chart"></canvas>
+<div id="levels" class="small"></div>
+</div>
+
+<div class="panel">
+<strong>Сигналы по формальным правилам</strong>
+<p class="small">Это исследовательские гипотезы, а не рекомендации покупать или продавать.</p>
+<div class="signal">Пробой за всю загруженную историю<div id="breakCount" class="stat">—</div></div>
+<div class="signal">Откат / ретест<div id="retestCount" class="stat">—</div></div>
+<div id="latest"></div>
+</div>
+
+<div class="panel">
+<strong>Правила отбора</strong>
+<p>Пробой: закрытие выше максимума предыдущих 20 свечей не менее чем на 0,2%; закрытие в верхних 35% диапазона дня.</p>
+<p>Ретест: в предыдущие 5 свечей возник пробой; минимум текущей свечи в пределах ±1,5% уровня; закрытие не ниже уровня и выше открытия.</p>
+<p class="small">Счётчики показывают найденные сигналы, а не прибыльность. Они не учитывают исполнение по реальным ценам, комиссии и проскальзывание. Сигналы на незакрытой дневной свече могут исчезнуть.</p>
+</div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+let candles=[];
+
+function fmt(n){
+ return Number(n).toLocaleString('ru-RU',{maximumFractionDigits:2});
+}
+function dateText(s){return String(s||'').slice(0,10)}
+function getSignals(a){
+ const out=[];
+ for(let i=20;i<a.length;i++){
+  const prev=a.slice(i-20,i);
+  const level=Math.max(...prev.map(c=>c.high));
+  const c=a[i];
+  const range=c.high-c.low;
+  const strong=range>0 && (c.high-c.close)/range<=0.35;
+  const breakout=c.close>level*1.002 && strong;
+  let retest=false;
+  if(i>=25){
+   for(let j=Math.max(20,i-5);j<i;j++){
+    const history=a.slice(j-20,j);
+    if(history.length<20)continue;
+    const oldLevel=Math.max(...history.map(x=>x.high));
+    const old=a[j];
+    const oldRange=old.high-old.low;
+    const oldStrong=oldRange>0&&(old.high-old.close)/oldRange<=0.35;
+    if(old.close>oldLevel*1.002&&oldStrong&&
+       c.low>=oldLevel*0.985&&c.low<=oldLevel*1.015&&
+       c.close>=oldLevel&&c.close>c.open){
+       retest=true;break;
+    }
+   }
+  }
+  out.push({i,level,breakout,retest});
+ }
+ return out;
+}
+function draw(){
+ const canvas=$('chart'),ctx=canvas.getContext('2d');
+ const w=Math.max(300,canvas.clientWidth),h=300;
+ const dpr=window.devicePixelRatio||1;
+ canvas.width=w*dpr;canvas.height=h*dpr;
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ ctx.clearRect(0,0,w,h);
+ if(!candles.length)return;
+ const a=candles.slice(-80);
+ const min=Math.min(...a.map(c=>c.low));
+ const max=Math.max(...a.map(c=>c.high));
+ const pad=(max-min)*0.08||1;
+ const lo=min-pad,hi=max+pad;
+ const left=42,right=8,top=12,bottom=24;
+ const cw=(w-left-right)/a.length;
+ const y=v=>top+(hi-v)/(hi-lo)*(h-top-bottom);
+ ctx.font='11px Arial';ctx.fillStyle='#b8c4d1';
+ for(let k=0;k<5;k++){
+  const val=lo+(hi-lo)*k/4, yy=y(val);
+  ctx.strokeStyle='#334454';ctx.beginPath();
+  ctx.moveTo(left,yy);ctx.lineTo(w-right,yy);ctx.stroke();
+  ctx.fillText(fmt(val),2,yy+4);
+ }
+ a.forEach((c,i)=>{
+  const x=left+i*cw+cw/2;
+  const up=c.close>=c.open;
+  ctx.strokeStyle=up?'#70dfa4':'#ff8585';
+  ctx.fillStyle=ctx.strokeStyle;
+  ctx.beginPath();ctx.moveTo(x,y(c.high));ctx.lineTo(x,y(c.low));ctx.stroke();
+  const yy=Math.min(y(c.open),y(c.close));
+  const bh=Math.max(1,Math.abs(y(c.open)-y(c.close)));
+  ctx.fillRect(x-Math.max(1,cw*0.3),yy,Math.max(2,cw*0.6),bh);
+ });
+ ctx.fillStyle='#b8c4d1';
+ ctx.fillText(dateText(a[0].begin),left,h-5);
+ ctx.fillText(dateText(a[a.length-1].begin),Math.max(left,w-90),h-5);
+}
+async function load(){
+ const ticker=$('ticker').value.trim().toUpperCase();
+ if(!/^[A-Z0-9.-]{1,12}$/.test(ticker)){
+  $('status').textContent='Проверь тикер.';return;
+ }
+ $('status').textContent='Загружаю дневные свечи…';
+ $('load').disabled=true;
+ try{
+  const url='https://iss.moex.com/iss/engines/stock/markets/shares/securities/'+
+   encodeURIComponent(ticker)+'/candles.json?from=2025-01-01&interval=24&iss.meta=off&limit=500';
+  const r=await fetch(url);
+  if(!r.ok)throw Error('HTTP '+r.status);
+  const j=await r.json();
+  const block=j.candles;
+  if(!block||!block.data||!block.data.length)throw Error('MOEX не вернула свечи для этого тикера.');
+  const idx={};
+  block.columns.forEach((k,i)=>idx[k]=i);
+  candles=block.data.map(row=>({
+   begin:row[idx.begin],
+   open:+row[idx.open],close:+row[idx.close],
+   high:+row[idx.high],low:+row[idx.low]
+  })).filter(c=>c.begin&&[c.open,c.close,c.high,c.low].every(Number.isFinite));
+  const limit=+$('period').value;
+  candles=candles.slice(-limit);
+  if(candles.length<21)throw Error('Мало дневных свечей для расчёта уровней.');
+  const last=candles[candles.length-1];
+  const today=new Date();
+  const lastDate=new Date(dateText(last.begin)+'T00:00:00');
+  const age=Math.floor((new Date(today.getFullYear(),today.getMonth(),today.getDate())-lastDate)/86400000);
+  $('status').innerHTML='Тикер: <b>'+ticker+'</b><br>Последняя свеча: <b>'+dateText(last.begin)+'</b><br>'+
+   'Закрытие: <b>'+fmt(last.close)+'</b><br>'+
+   '<span class="'+(age>4?'bad':'warn')+'">'+
+   (age>4?'Проверь свежесть данных: последняя свеча не новая.':'Дата свечи проверена; это не гарантия реального времени.')+'</span>';
+  const signals=getSignals(candles);
+  $('breakCount').textContent=signals.filter(s=>s.breakout).length;
+  $('retestCount').textContent=signals.filter(s=>s.retest).length;
+  const last20=candles.slice(-21,-1);
+  $('levels').textContent='Максимум предыдущих 20 свечей: '+fmt(Math.max(...last20.map(c=>c.high)))+
+   ' · Минимум: '+fmt(Math.min(...last20.map(c=>c.low)));
+  const found=signals.filter(s=>s.i===candles.length-1);
+  $('latest').innerHTML='<p><b>Сигнал на последней загруженной свече:</b></p>'+
+   (found.some(s=>s.breakout)?'<p class="good">Обнаружен пробой по заданным правилам.</p>':'')+
+   (found.some(s=>s.retest)?'<p class="good">Обнаружен ретест по заданным правилам.</p>':'')+
+   (!found.some(s=>s.breakout||s.retest)?'<p>Сигналов по заданным правилам нет.</p>':'')+
+   '<p class="small">Это механическая проверка условий, а не прогноз цены.</p>';
+  draw();
+ }catch(e){
+  $('status').innerHTML='<span class="bad">Не удалось загрузить данные: '+String(e.message||e)+
+   '</span><p class="small">Проверь интернет и тикер. Если ошибка повторяется, браузер может блокировать запрос MOEX.</p>';
+ }finally{$('load').disabled=false}
+}
+$('load').addEventListener('click',load);
+window.addEventListener('resize',draw);
+</script>
+</body>
+</html>
