@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101820">
+<title>MOEX Trade Lab — прототип</title>
+<style>
+:root{color-scheme:dark;--bg:#101820;--panel:#18232d;--panel2:#202e39;--text:#edf3f7;--muted:#9eafbc;--line:#334653;--green:#55d6a0;--red:#ff7777;--blue:#8bc4ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:18px 16px 14px;background:#131e27;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
+h1{font-size:20px;margin:0 0 4px} .sub{font-size:12px;color:var(--muted)}
+main{max-width:900px;margin:auto;padding:14px;display:grid;gap:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+h2{font-size:16px;margin:0 0 12px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+select,input{width:100%;min-height:42px;padding:9px 10px;border-radius:9px;border:1px solid #405462;background:#111a22;color:var(--text);font:inherit}
+button{border:0;border-radius:10px;padding:12px 14px;font-weight:700;background:var(--blue);color:#0d1921;width:100%;margin-top:10px}
+button:disabled{opacity:.5}
+.status{font-size:12px;color:var(--muted);margin-top:9px;min-height:18px}
+.freshness{margin-top:10px;padding:10px 11px;border-radius:10px;border:1px solid var(--line);background:#111a22;font-size:12px;line-height:1.5}
+.freshness.good{border-color:#2c795d}.freshness.warn{border-color:#a77b35}.freshness.bad{border-color:#a44747}
+.chartwrap{height:310px;position:relative;margin-top:12px}
+canvas{width:100%;height:100%;display:block}
+.legend{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:7px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.metric{background:var(--panel2);border-radius:10px;padding:10px}
+.metric span{display:block;font-size:11px;color:var(--muted)}.metric strong{display:block;font-size:16px;margin-top:3px;overflow-wrap:anywhere}
+.calcgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.notice{font-size:12px;color:var(--muted);line-height:1.5}
+.result{margin-top:12px;padding:12px;border-radius:10px;background:#111a22;border:1px solid var(--line)}
+.result strong{color:var(--green)}
+a{color:var(--blue)}
+@media(min-width:700px){main{grid-template-columns:1.2fr .8fr;align-items:start}.chartpanel{grid-column:1}.calc{grid-column:2;grid-row:1 / span 2}.overview{grid-column:1}}
+@media(max-width:380px){.metrics{grid-template-columns:1fr 1fr}.chartwrap{height:260px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>MOEX Trade Lab</h1>
+  <div class="sub">Учебный прототип · только анализ и бумажные сделки · ордера не отправляются</div>
+</header>
+<main>
+<section class="panel chartpanel">
+  <h2>График акции</h2>
+  <div class="controls">
+    <div><label for="ticker">Тикер</label><select id="ticker">
+      <option value="SBER">SBER — Сбербанк</option>
+      <option value="LKOH">LKOH — Лукойл</option>
+      <option value="YDEX">YDEX — Яндекс</option>
+      <option value="TATN">TATN — Татнефть</option>
+      <option value="T">T — Т-Технологии</option>
+      <option value="X5">X5 — X5</option>
+      <option value="IRAO">IRAO — Интер РАО</option>
+    </select></div>
+    <div><label for="interval">Таймфрейм</label><select id="interval">
+      <option value="24">1 день</option><option value="60">1 час</option><option value="10">10 минут</option>
+    </select></div>
+  </div>
+  <button id="load">Загрузить данные MOEX</button>
+  <div id="status" class="status" role="status">Нажми «Загрузить данные MOEX».</div>
+  <div class="chartwrap"><canvas id="chart" aria-label="Свечной график"></canvas></div>
+  <div class="legend"><span>▰ Зелёная свеча — закрытие выше открытия</span><span>▰ Красная — ниже</span></div>
+  <div class="notice" style="margin-top:10px">Источник: публичный MOEX ISS API. Данные могут быть задержаны; это не биржевой терминал и не гарантирует real-time котировки.</div>
+</section>
+
+<section class="panel overview">
+  <h2>Последняя загруженная свеча</h2>
+  <div class="metrics">
+    <div class="metric"><span>Закрытие</span><strong id="lastclose">—</strong></div>
+    <div class="metric"><span>Изменение свечи</span><strong id="change">—</strong></div>
+    <div class="metric"><span>Объём</span><strong id="volume">—</strong></div>
+  </div>
+  <div id="lasttime" class="status"></div>
+  <div id="freshness" class="freshness warn">Актуальность будет проверена после загрузки свечей.</div>
+</section>
+
+<section class="panel calc">
+  <h2>Калькулятор виртуальной сделки</h2>
+  <div class="calcgrid">
+    <div><label for="budget">Бюджет, ₽</label><input id="budget" type="number" min="0" step="1" value="1000"></div>
+    <div><label for="riskcap">Лимит риска, ₽</label><input id="riskcap" type="number" min="0" step="1" value="20"></div>
+    <div><label for="entry">План входа, ₽</label><input id="entry" type="number" min="0" step="0.01" placeholder="Напр. 280"></div>
+    <div><label for="stop">Стоп, ₽</label><input id="stop" type="number" min="0" step="0.01" placeholder="Ниже входа"></div>
+    <div><label for="target">Цель, ₽</label><input id="target" type="number" min="0" step="0.01" placeholder="Выше входа"></div>
+    <div><label for="cost">Издержки на круг, ₽</label><input id="cost" type="number" min="0" step="0.01" value="0.60"></div>
+  </div>
+  <button id="calc">Рассчитать план</button>
+  <div id="result" class="result">Введи вход, стоп и цель. Расчёт — учебный, для длинной позиции без плеча.</div>
+  <p class="notice">Расчёт округляет количество вниз до целых акций и учитывает заданные издержки на круг. Он не знает автоматически биржевой лот, текущий спред и тариф твоего брокера — проверь их отдельно. Для реального решения на этом этапе не использовать.</p>
+</section>
+<section class="panel">
+  <h2>Как использовать</h2>
+  <ol class="notice">
+    <li>Выбери тикер и таймфрейм, загрузи свечи.</li>
+    <li>Проверь время данных и не считай старую свечу текущей ценой.</li>
+    <li>Заполняй калькулятор только после формализации сигнала, отмены идеи и плана выхода.</li>
+    <li>Не открывай сделку только потому, что цена растёт или падает.</li>
+  </ol>
+  <div class="notice">Если загрузка не работает, возможны ограничения CORS браузера или недоступность API. Это будет означать, что нужен небольшой сервер-посредник; не отключай защиту браузера ради этого прототипа.</div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let candles=[];
+function fmt(n){return Number(n).toLocaleString('ru-RU',{maximumFractionDigits:4})}
+function status(s){$('status').textContent=s}
+async function loadData(){
+  const ticker=$('ticker').value, interval=$('interval').value, btn=$('load');
+  btn.disabled=true; status('Запрашиваю свечи у MOEX ISS…');
+  try{
+    const to=new Date(), from=new Date();
+    from.setDate(from.getDate()-(interval==='24'?180:30));
+    const d=x=>x.toISOString().slice(0,10);
+    const url=`https://iss.moex.com/iss/engines/stock/markets/shares/securities/${encodeURIComponent(ticker)}/candles.json?from=${d(from)}&till=${d(to)}&interval=${interval}&iss.meta=off&iss.only=candles&candles.columns=begin,open,high,low,close,volume`;
+    const response=await fetch(url,{headers:{Accept:'application/json'}});
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    const json=await response.json();
+    const rows=json?.candles?.data||[];
+    candles=rows.map(r=>({time:r[0],open:+r[1],high:+r[2],low:+r[3],close:+r[4],volume:+r[5]})).filter(c=>Number.isFinite(c.close));
+    if(!candles.length) throw new Error('API не вернул свечи для выбранного периода/тикера.');
+    drawChart(); updateLatest();
+    status(`Загружено свечей: ${candles.length}. Проверь время последней свечи ниже.`);
+  }catch(e){
+    status(`Не удалось загрузить данные: ${e.message}. Возможны ограничения CORS или временная недоступность API. Не используй неподтверждённые котировки.`);
+  }finally{btn.disabled=false}
+}
+function drawChart(){
+  const canvas=$('chart'), rect=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  canvas.width=Math.max(1,Math.floor(rect.width*dpr)); canvas.height=Math.max(1,Math.floor(rect.height*dpr));
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const w=rect.width,h=rect.height;ctx.clearRect(0,0,w,h);
+  if(!candles.length){ctx.fillStyle='#9eafbc';ctx.fillText('Нет загруженных данных',12,25);return}
+  const shown=candles.slice(-Math.min(100,candles.length));
+  const lo=Math.min(...shown.map(c=>c.low)), hi=Math.max(...shown.map(c=>c.high));
+  const pad={l:8,r:60,t:12,b:24}, cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  const span=(hi-lo)||1, y=v=>pad.t+(hi-v)/span*ch;
+  ctx.font='10px system-ui';ctx.strokeStyle='#293b47';ctx.fillStyle='#9eafbc';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const val=hi-span*i/4, yy=y(val);ctx.beginPath();ctx.moveTo(pad.l,yy);ctx.lineTo(w-pad.r,yy);ctx.stroke();ctx.fillText(fmt(val),w-pad.r+5,yy+3)}
+  const step=cw/shown.length, body=Math.max(2,Math.min(9,step*.62));
+  shown.forEach((c,i)=>{
+    const x=pad.l+i*step+step/2, up=c.close>=c.open, color=up?'#55d6a0':'#ff7777';
+    ctx.strokeStyle=color;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(x,y(c.high));ctx.lineTo(x,y(c.low));ctx.stroke();
+    const top=y(Math.max(c.open,c.close)), bottom=y(Math.min(c.open,c.close));
+    ctx.fillRect(x-body/2,top,body,Math.max(1,bottom-top));
+  });
+  ctx.fillStyle='#9eafbc';ctx.fillText(shown[0].time.slice(0,10),pad.l,h-6);
+  const end=shown[shown.length-1].time;ctx.fillText(end.slice(0,10),Math.max(pad.l,w-pad.r-70),h-6);
+}
+function moscowDate(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Moscow',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
+function dayDiff(a,b){const aa=Date.parse(a+'T00:00:00Z'),bb=Date.parse(b+'T00:00:00Z');return Math.round((bb-aa)/86400000)}
+function updateLatest(){
+  const c=candles[candles.length-1], pct=c.open?((c.close/c.open)-1)*100:0;
+  $('lastclose').textContent=fmt(c.close)+' ₽';
+  $('change').textContent=(pct>=0?'+':'')+pct.toLocaleString('ru-RU',{maximumFractionDigits:2})+'%';
+  $('change').style.color=pct>=0?'#55d6a0':'#ff7777';
+  $('volume').textContent=Number(c.volume||0).toLocaleString('ru-RU',{maximumFractionDigits:0});
+  $('lasttime').textContent='Последняя свеча по данным API: '+c.time+' (для дневных свечей 00:00 обычно является меткой даты, а не временем последней сделки).';
+  const date=String(c.time).slice(0,10), today=moscowDate(), age=dayDiff(date,today), box=$('freshness');
+  box.className='freshness';
+  if(date===today){box.classList.add('good');box.textContent='Дата последней свечи совпадает с сегодняшней датой по Москве. Это не доказывает real-time обновление: задержка API не измерена, сверяй цену у брокера.';}
+  else if(age>0){box.classList.add('warn');box.textContent=`Данные не за сегодня: последняя свеча датирована ${date} (отставание по календарю — ${age} дн.). Если рынок закрыт, это может быть нормально; актуальная цена не подтверждена.`;}
+  else {box.classList.add('warn');box.textContent=`Не удалось однозначно определить свежесть даты ${date}. Проверь дату и время источника; актуальная цена не подтверждена.`;}
+}
+function calculate(){
+  const budget=+$('budget').value,riskcap=+$('riskcap').value,entry=+$('entry').value,stop=+$('stop').value,target=+$('target').value,cost=+$('cost').value;
+  const out=$('result');
+  if(!(budget>0&&riskcap>=0&&entry>0&&stop>0&&target>0&&cost>=0)){out.textContent='Заполни все поля корректными положительными значениями.';return}
+  if(!(stop<entry&&target>entry)){out.textContent='Для длинной позиции стоп должен быть ниже входа, а цель — выше входа.';return}
+  const perShare=entry-stop, qtyByRisk=Math.floor(Math.max(0,(riskcap-cost))/perShare), qtyByBudget=Math.floor(budget/entry), qty=Math.max(0,Math.min(qtyByRisk,qtyByBudget));
+  const risk=qty*perShare+cost, reward=qty*(target-entry)-cost, rr=(entry-stop)>0?(target-entry)/(entry-stop):0;
+  out.innerHTML=`Количество: <strong>${qty} акц.</strong><br>Сумма входа: ${fmt(qty*entry)} ₽<br>Потенциальный убыток с заданными издержками: <strong>${fmt(risk)} ₽</strong><br>Потенциальная прибыль до непредвиденного проскальзывания: ${fmt(reward)} ₽<br>Соотношение потенциальной прибыли к риску на акцию: ${fmt(rr)} : 1<br><span style="color:${qty>0&&risk<=riskcap?'#55d6a0':'#ff7777'}">${qty>0&&risk<=riskcap?'Укладывается в заданные бюджет и риск — только арифметическая проверка.':'При заданных параметрах нет допустимого размера позиции.'}</span>`;
+}
+$('load').addEventListener('click',loadData);$('calc').addEventListener('click',calculate);
+window.addEventListener('resize',()=>{if(candles.length)drawChart()});
+</script>
+</body>
+</html>
