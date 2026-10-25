@@ -2,13 +2,614 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101820">
 <title>MOEX Trade Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#101820;--panel:#18232d;--panel2:#202e39;--text:#edf3f7;--muted:#9eafbc;--line:#334653;--green:#55d6a0;--red:#ff7777;--blue:#8bc4ff;--amber:#f4c26b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{padding:16px;background:#131e27;border-bottom:1px solid var(--line)}
+h1{font-size:21px;margin:0 0 4px}h2{font-size:16px;margin:0 0 12px}h3{font-size:14px;margin:14px 0 6px}
+.sub,.muted,.note{color:var(--muted);font-size:12px}
+main{max-width:1150px;margin:auto;padding:12px;display:grid;gap:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+input,select,textarea{width:100%;min-height:40px;padding:9px;border-radius:9px;border:1px solid #405462;background:#111a22;color:var(--text);font:inherit}
+textarea{min-height:90px;resize:vertical}
+button{border:0;border-radius:10px;padding:12px;font-weight:700;background:var(--blue);color:#0d1921;width:100%;margin-top:9px;cursor:pointer}
+button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:wait}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.metric{background:var(--panel2);border-radius:10px;padding:10px;min-width:0}
+.metric span{display:block;color:var(--muted);font-size:11px}
+.metric strong{display:block;font-size:17px;margin-top:3px;overflow-wrap:anywhere}
+.status{white-space:pre-wrap;color:var(--muted);font-size:12px;margin-top:10px;overflow-wrap:anywhere}
+.tablewrap{overflow:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;min-width:920px;font-size:12px}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{color:var(--muted);font-weight:600;background:#15212a}
+td:first-child,th:first-child{text-align:left}
+.good{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}
+.chartwrap{height:270px;margin-top:12px}
+canvas{width:100%;height:100%;display:block}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:4px 8px;color:var(--muted);font-size:11px}
+ul{padding-left:20px}
+@media(min-width:760px){
+ main{padding:18px}
+ .grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .twocol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+}
+</style>
 </head>
-<body style="margin:0">
-<iframe
-  src="./moex_trade_lab_android_v2-1.html"
-  style="width:100%;height:100vh;border:0"
-></iframe>
+<body>
+<header>
+  <h1>MOEX Trade Lab</h1>
+  <div class="sub">Исследование восстановления акций · виртуальная торговля · ордера не отправляются</div>
+</header>
+
+<main>
+<section class="panel">
+  <h2>Сканер «Падение → стабилизация → восстановление»</h2>
+  <p class="note">
+    Ищем закрытие минимум на заданный процент ниже предыдущего максимума,
+    затем пробой максимума предыдущих торговых дней. Вход моделируется
+    на открытии следующей свечи. Это технический фильтр, а не доказательство
+    фундаментальной недооценённости.
+  </p>
+
+  <div class="grid">
+    <div>
+      <label for="dateFrom">Начало истории</label>
+      <input id="dateFrom" type="date" value="2020-01-01">
+    </div>
+    <div>
+      <label for="dateTo">Конец истории</label>
+      <input id="dateTo" type="date">
+    </div>
+    <div>
+      <label for="priceCap">Максимальная цена акции, ₽</label>
+      <input id="priceCap" type="number" min="1" step="1" value="1000">
+    </div>
+    <div>
+      <label for="dropPct">Падение от максимума, %</label>
+      <input id="dropPct" type="number" min="5" max="90" value="25">
+    </div>
+    <div>
+      <label for="lookback">Период максимума, свечей</label>
+      <input id="lookback" type="number" min="60" max="500" value="252">
+    </div>
+    <div>
+      <label for="confirmBars">Период подтверждения, свечей</label>
+      <input id="confirmBars" type="number" min="3" max="60" value="10">
+    </div>
+    <div>
+      <label for="commission">Комиссия на сторону, %</label>
+      <input id="commission" type="number" min="0" max="2" step="0.01" value="0.05">
+    </div>
+    <div>
+      <label for="slippage">Проскальзывание на сторону, ₽/акцию</label>
+      <input id="slippage" type="number" min="0" step="0.01" value="0.05">
+    </div>
+  </div>
+
+  <h3>Тикеры MOEX</h3>
+  <label for="tickers">Измени список при необходимости. Тикеры через запятую.</label>
+  <textarea id="tickers">SBER,SBERP,GAZP,VTBR,MTSS,NLMK,CHMF,IRAO,RTKM,AFLT,ALRS,HYDR,FEES,MOEX,PIKK,POSI,ROSN,TATN</textarea>
+
+  <button id="scanButton">Загрузить данные и запустить сканер</button>
+  <button id="csvButton" class="secondary" disabled>Скачать результаты CSV</button>
+
+  <div id="scanStatus" class="status">Готово к запуску.</div>
+
+  <div class="metrics">
+    <div class="metric"><span>Тикеров обработано</span><strong id="mTickers">—</strong></div>
+    <div class="metric"><span>Последняя цена ≤ лимита</span><strong id="mEligible">—</strong></div>
+    <div class="metric"><span>Сигналов найдено</span><strong id="mSignals">—</strong></div>
+    <div class="metric"><span>Загрузка с ошибками</span><strong id="mErrors">—</strong></div>
+  </div>
+
+  <div class="tablewrap">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Тикер</th>
+          <th>Сигнал</th>
+          <th>Вход</th>
+          <th>Цена входа, ₽</th>
+          <th>Падение, %</th>
+          <th>Максимум, ₽</th>
+          <th>6 мес., %</th>
+          <th>12 мес., %</th>
+          <th>24 мес., %</th>
+          <th>36 мес., %</th>
+          <th>Макс. просадка, %</th>
+          <th>Последняя цена, ₽</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="12" style="text-align:left">Результатов пока нет.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note">
+    Горизонты: 126, 252, 504 и 756 торговых свечей после входа.
+    Доходность учитывает приблизительные комиссии и проскальзывание,
+    но пока не включает дивиденды, налоги, спред и корпоративные события.
+    «Нет данных» означает, что соответствующий горизонт ещё не завершился.
+  </p>
+</section>
+
+<div class="twocol">
+<section class="panel">
+  <h2>График дневных свечей</h2>
+  <div class="grid">
+    <div>
+      <label for="chartTicker">Тикер</label>
+      <select id="chartTicker">
+        <option>SBER</option><option>SBERP</option><option>GAZP</option>
+        <option>VTBR</option><option>MTSS</option><option>NLMK</option>
+        <option>CHMF</option><option>IRAO</option><option>RTKM</option>
+        <option>AFLT</option><option>ALRS</option><option>HYDR</option>
+        <option>FEES</option><option>MOEX</option><option>PIKK</option>
+        <option>POSI</option><option>ROSN</option><option>TATN</option>
+      </select>
+    </div>
+    <div>
+      <label for="chartBars">Свечей на графике</label>
+      <select id="chartBars">
+        <option value="180">180</option>
+        <option value="365">365</option>
+        <option value="756" selected>756</option>
+      </select>
+    </div>
+  </div>
+  <button id="chartButton" class="secondary">Загрузить график</button>
+  <div id="chartStatus" class="status">График ещё не загружен.</div>
+  <div class="chartwrap"><canvas id="priceChart"></canvas></div>
+</section>
+
+<section class="panel">
+  <h2>Правила исследования</h2>
+  <ul class="note">
+    <li>Используются дневные свечи MOEX ISS.</li>
+    <li>Текущая цена акции должна быть не выше установленного лимита.</li>
+    <li>Историческая цена входа также должна быть не выше лимита.</li>
+    <li>Сигнал появляется, когда закрытие выше максимума предыдущих N свечей, а цена остаётся ниже заданного процента от предыдущего максимума.</li>
+    <li>Вход моделируется на открытии следующей свечи, чтобы не использовать цену закрытия сигнального дня.</li>
+    <li>Стоп-лосса нет. Просадка показывается как измерение риска, а не как автоматический выход.</li>
+    <li>Новые покупки и усреднение автоматически не моделируются.</li>
+    <li>Сканер не анализирует отчётность, долг или справедливую стоимость компании.</li>
+  </ul>
+  <span class="pill">Без плеча · без реальных сделок · без автоматического стопа</span>
+</section>
+</div>
+</main>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+let scanResults = [];
+let chartData = [];
+const cache = new Map();
+
+function moscowDate() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Moscow",
+    year: "numeric", month: "2-digit", day: "2-digit"
+  }).formatToParts(new Date());
+  const p = Object.fromEntries(parts.map(x => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day}`;
+}
+$("dateTo").value = moscowDate();
+
+function num(x, digits = 2) {
+  return Number(x).toLocaleString("ru-RU", {
+    minimumFractionDigits: 0, maximumFractionDigits: digits
+  });
+}
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+function safeText(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[ch]));
+}
+
+/*
+ * Получает все дневные свечи за период.
+ * Использует пагинацию MOEX ISS, потому что одна страница
+ * может не содержать всю историческую последовательность.
+ */
+async function getCandles(ticker, from, till) {
+  const key = `${ticker}|${from}|${till}`;
+  if (cache.has(key)) return cache.get(key);
+
+  let all = [];
+  let start = 0;
+  const pageSize = 500;
+
+  for (let page = 0; page < 40; page++) {
+    const url =
+      "https://iss.moex.com/iss/engines/stock/markets/shares/securities/" +
+      encodeURIComponent(ticker) +
+      "/candles.json?from=" + encodeURIComponent(from) +
+      "&till=" + encodeURIComponent(till) +
+      "&interval=24&iss.meta=off&iss.only=candles" +
+      "&candles.columns=begin,open,high,low,close,volume" +
+      `&limit=${pageSize}&start=${start}`;
+
+    const response = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error(`${ticker}: HTTP ${response.status}`);
+
+    const json = await response.json();
+    const rows = json?.candles?.data || [];
+
+    for (const row of rows) {
+      const candle = {
+        date: String(row[0]).slice(0, 10),
+        open: Number(row[1]),
+        high: Number(row[2]),
+        low: Number(row[3]),
+        close: Number(row[4]),
+        volume: Number(row[5])
+      };
+      if (
+        candle.date &&
+        Number.isFinite(candle.open) &&
+        Number.isFinite(candle.high) &&
+        Number.isFinite(candle.low) &&
+        Number.isFinite(candle.close)
+      ) all.push(candle);
+    }
+
+    if (rows.length < pageSize) break;
+    start += rows.length;
+    await wait(80);
+  }
+
+  all.sort((a, b) => a.date.localeCompare(b.date));
+  all = all.filter((c, i) => i === 0 || c.date !== all[i - 1].date);
+
+  if (!all.length) throw new Error(`${ticker}: нет свечей за выбранный период`);
+
+  cache.set(key, all);
+  return all;
+}
+
+/*
+ * Доходность после приблизительных торговых издержек.
+ * Вход и выход — цены исполнения плюс/минус проскальзывание.
+ */
+function netReturnPct(entry, exit, commissionPct, slippage) {
+  const buyPrice = entry + slippage;
+  const sellPrice = Math.max(0, exit - slippage);
+  const fee = commissionPct / 100;
+  const buyCost = buyPrice * (1 + fee);
+  const sellProceeds = sellPrice * (1 - fee);
+  if (buyCost <= 0) return null;
+  return (sellProceeds / buyCost - 1) * 100;
+}
+
+/*
+ * Поиск сигналов без использования будущих свечей для определения входа.
+ * Для сигнала в индексе i используются только данные до закрытия i.
+ * Цена входа берётся с открытия i+1.
+ */
+function scanTicker(ticker, candles, cfg) {
+  const out = [];
+  if (candles.length < cfg.lookback + cfg.confirmBars + 2) return out;
+
+  const last = candles[candles.length - 1];
+  if (last.close > cfg.cap) return out;
+
+  let lastSignalIndex = -Infinity;
+
+  for (let i = cfg.lookback; i < candles.length - 1; i++) {
+    let priorHigh = -Infinity;
+    for (let j = i - cfg.lookback; j < i; j++) {
+      priorHigh = Math.max(priorHigh, candles[j].high);
+    }
+
+    const dropPct = (candles[i].close / priorHigh - 1) * 100;
+    if (dropPct > -cfg.dropPct) continue;
+
+    let confirmHigh = -Infinity;
+    for (let j = i - cfg.confirmBars; j < i; j++) {
+      confirmHigh = Math.max(confirmHigh, candles[j].high);
+    }
+    if (candles[i].close <= confirmHigh) continue;
+
+    // Не считаем каждую соседнюю свечу отдельным одинаковым сигналом.
+    if (i - lastSignalIndex <= cfg.confirmBars) continue;
+
+    const entryCandle = candles[i + 1];
+    const entryPrice = entryCandle.open;
+
+    if (!(entryPrice > 0) || entryPrice > cfg.cap) continue;
+
+    lastSignalIndex = i;
+
+    const horizons = [126, 252, 504, 756].map(bars => {
+      const idx = i + 1 + bars;
+      if (idx >= candles.length) return null;
+      return netReturnPct(entryPrice, candles[idx].close, cfg.commission, cfg.slippage);
+    });
+
+    let minLow = Infinity;
+    for (let j = i + 1; j < candles.length; j++) {
+      minLow = Math.min(minLow, candles[j].low);
+    }
+    const maxDrawdown = minLow < Infinity
+      ? (minLow / entryPrice - 1) * 100
+      : null;
+
+    out.push({
+      ticker,
+      signalDate: candles[i].date,
+      entryDate: entryCandle.date,
+      entryPrice,
+      dropPct,
+      priorHigh,
+      horizons,
+      maxDrawdown,
+      lastPrice: last.close
+    });
+  }
+
+  return out;
+}
+
+function renderResults(rows) {
+  const tbody = $("resultsTable").querySelector("tbody");
+  if (!rows.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="12" style="text-align:left">' +
+      "Сигналов не найдено. Не меняй параметры только ради появления сигналов." +
+      "</td></tr>";
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const horizonCells = r.horizons.map(v => {
+      if (v === null) return '<span class="warn">нет данных</span>';
+      return `<span class="${v >= 0 ? "good" : "bad"}">${num(v)}%</span>`;
+    });
+    const dd = r.maxDrawdown === null
+      ? "—"
+      : `<span class="bad">${num(r.maxDrawdown)}%</span>`;
+
+    return `<tr>
+      <td>${safeText(r.ticker)}</td>
+      <td>${r.signalDate}</td>
+      <td>${r.entryDate}</td>
+      <td>${num(r.entryPrice)}</td>
+      <td class="bad">${num(r.dropPct)}%</td>
+      <td>${num(r.priorHigh)}</td>
+      <td>${horizonCells[0]}</td>
+      <td>${horizonCells[1]}</td>
+      <td>${horizonCells[2]}</td>
+      <td>${horizonCells[3]}</td>
+      <td>${dd}</td>
+      <td>${num(r.lastPrice)}</td>
+    </tr>`;
+  }).join("");
+}
+
+async function runScan() {
+  const button = $("scanButton");
+  button.disabled = true;
+  $("csvButton").disabled = true;
+  scanResults = [];
+
+  const tickers = [...new Set(
+    $("tickers").value.toUpperCase()
+      .split(/[\s,;]+/)
+      .map(s => s.trim())
+      .filter(s => /^[A-Z0-9_-]{1,12}$/.test(s))
+  )];
+
+  const cfg = {
+    cap: Number($("priceCap").value),
+    dropPct: Number($("dropPct").value),
+    lookback: Math.floor(Number($("lookback").value)),
+    confirmBars: Math.floor(Number($("confirmBars").value)),
+    commission: Number($("commission").value),
+    slippage: Number($("slippage").value)
+  };
+  const from = $("dateFrom").value;
+  const till = $("dateTo").value;
+
+  if (
+    !tickers.length || !from || !till || from >= till ||
+    !(cfg.cap > 0) || !(cfg.dropPct > 0 && cfg.dropPct < 100) ||
+    !(cfg.lookback > cfg.confirmBars) || !(cfg.confirmBars >= 3) ||
+    cfg.commission < 0 || cfg.slippage < 0
+  ) {
+    $("scanStatus").textContent = "Проверь даты и параметры сканера.";
+    button.disabled = false;
+    return;
+  }
+
+  let eligible = 0;
+  const errors = [];
+  $("mTickers").textContent = "0";
+  $("mEligible").textContent = "0";
+  $("mSignals").textContent = "0";
+  $("mErrors").textContent = "0";
+
+  try {
+    for (let i = 0; i < tickers.length; i++) {
+      const ticker = tickers[i];
+      $("scanStatus").textContent =
+        `Загрузка ${ticker}, ${i + 1} из ${tickers.length}…`;
+
+      try {
+        const candles = await getCandles(ticker, from, till);
+        if (candles[candles.length - 1].close <= cfg.cap) eligible++;
+
+        scanResults.push(...scanTicker(ticker, candles, cfg));
+      } catch (error) {
+        errors.push(error.message || String(error));
+      }
+
+      $("mTickers").textContent = String(i + 1);
+      $("mEligible").textContent = String(eligible);
+      $("mSignals").textContent = String(scanResults.length);
+      $("mErrors").textContent = String(errors.length);
+
+      renderResults(scanResults);
+      await wait(100);
+    }
+
+    scanResults.sort((a, b) =>
+      a.signalDate.localeCompare(b.signalDate) ||
+      a.ticker.localeCompare(b.ticker)
+    );
+    renderResults(scanResults);
+    $("csvButton").disabled = scanResults.length === 0;
+
+    $("scanStatus").textContent =
+      `Готово. Тикеров: ${tickers.length}; ` +
+      `последняя цена ≤ ${num(cfg.cap)} ₽: ${eligible}; ` +
+      `сигналов: ${scanResults.length}; ошибок: ${errors.length}.` +
+      (errors.length ? "\nОшибки:\n" + errors.join("\n") : "");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function downloadCSV() {
+  const headers = [
+    "ticker", "signal_date", "entry_date", "entry_price_RUB",
+    "drop_from_prior_high_pct", "prior_high_RUB",
+    "return_6m_pct", "return_12m_pct", "return_24m_pct",
+    "return_36m_pct", "max_drawdown_pct", "latest_price_RUB"
+  ];
+
+  const quote = value => {
+    if (value === null || value === undefined) return "";
+    return '"' + String(value).replace(/"/g, '""') + '"';
+  };
+
+  const lines = [
+    headers.join(","),
+    ...scanResults.map(r => [
+      r.ticker, r.signalDate, r.entryDate, r.entryPrice, r.dropPct,
+      r.priorHigh, ...r.horizons, r.maxDrawdown, r.lastPrice
+    ].map(quote).join(","))
+  ];
+
+  const blob = new Blob(["\ufeff" + lines.join("\r\n")], {
+    type: "text/csv;charset=utf-8"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "moex_recovery_scan.csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function drawChart(candles) {
+  const canvas = $("priceChart");
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+  canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const w = rect.width, h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const data = candles.slice(-Number($("chartBars").value));
+  if (!data.length) return;
+
+  const lo = Math.min(...data.map(c => c.low));
+  const hi = Math.max(...data.map(c => c.high));
+  const range = hi - lo || 1;
+  const pad = { left: 8, right: 55, top: 12, bottom: 24 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+  const y = value => pad.top + (hi - value) / range * ch;
+
+  ctx.font = "10px system-ui";
+  ctx.strokeStyle = "#293b47";
+  ctx.fillStyle = "#9eafbc";
+
+  for (let i = 0; i <= 4; i++) {
+    const value = hi - range * i / 4;
+    const yy = y(value);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, yy);
+    ctx.lineTo(w - pad.right, yy);
+    ctx.stroke();
+    ctx.fillText(num(value), w - pad.right + 4, yy + 3);
+  }
+
+  const step = cw / data.length;
+  const body = Math.max(1, Math.min(7, step * 0.65));
+
+  data.forEach((c, i) => {
+    const x = pad.left + i * step + step / 2;
+    const color = c.close >= c.open ? "#55d6a0" : "#ff7777";
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+
+    ctx.beginPath();
+    ctx.moveTo(x, y(c.high));
+    ctx.lineTo(x, y(c.low));
+    ctx.stroke();
+
+    const top = y(Math.max(c.open, c.close));
+    const bottom = y(Math.min(c.open, c.close));
+    ctx.fillRect(x - body / 2, top, body, Math.max(1, bottom - top));
+  });
+
+  ctx.fillStyle = "#9eafbc";
+  ctx.fillText(data[0].date, pad.left, h - 5);
+  ctx.fillText(data[data.length - 1].date, Math.max(pad.left, w - pad.right - 70), h - 5);
+}
+
+async function loadChart() {
+  const button = $("chartButton");
+  button.disabled = true;
+  $("chartStatus").textContent = "Запрашиваю дневные свечи MOEX ISS…";
+
+  try {
+    const ticker = $("chartTicker").value;
+    chartData = await getCandles(ticker, "2020-01-01", moscowDate());
+    drawChart(chartData);
+    const last = chartData[chartData.length - 1];
+
+    $("chartStatus").textContent =
+      `${ticker}: ${chartData.length} свечей. ` +
+      `Последняя свеча: ${last.date}, закрытие ${num(last.close)} ₽.`;
+  } catch (error) {
+    $("chartStatus").textContent =
+      "Не удалось загрузить график. " +
+      (error.message || String(error)) +
+      ". Проверь подключение и доступность MOEX ISS.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+$("scanButton").addEventListener("click", runScan);
+$("csvButton").addEventListener("click", downloadCSV);
+$("chartButton").addEventListener("click", loadChart);
+$("chartBars").addEventListener("change", () => {
+  if (chartData.length) drawChart(chartData);
+});
+window.addEventListener("resize", () => {
+  if (chartData.length) drawChart(chartData);
+});
+</script>
 </body>
 </html>
